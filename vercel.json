@@ -1,24 +1,10 @@
 {
   "functions": {
-    "api/generate.js": {
-      "maxDuration": 60
-    }
+    "api/analyze.js": { "maxDuration": 30 },
+    "api/question.js": { "maxDuration": 30 },
+    "api/evaluate.js": { "maxDuration": 20 }
   },
   "headers": [
-    {
-      "source": "/sw.js",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
-        { "key": "Service-Worker-Allowed", "value": "/" }
-      ]
-    },
-    {
-      "source": "/manifest.json",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=86400" },
-        { "key": "Content-Type", "value": "application/manifest+json" }
-      ]
-    },
     {
       "source": "/api/(.*)",
       "headers": [

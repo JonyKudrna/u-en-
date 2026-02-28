@@ -4,14 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Kvízový Průvodce</title>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#2563eb">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Kvíz">
-  <link rel="apple-touch-icon" id="apple-icon" href="icon.svg">
   <script>
-    // PDF.js lazy loader – zavolá se jen při nahrání PDF souboru
+    // PDF.js lazy loader
     window._pdfJsReady = null;
     window.loadPdfJs = function() {
       if (window._pdfJsReady) return window._pdfJsReady;
@@ -25,9 +19,7 @@
             'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
           resolve();
         };
-        s.onerror = () => reject(new Error(
-          'Nepodařilo se načíst PDF.js. Zkontrolujte internetové připojení a zkuste znovu.'
-        ));
+        s.onerror = () => reject(new Error('Nepodařilo se načíst PDF.js. Zkontrolujte internetové připojení.'));
         document.head.appendChild(s);
       });
       return window._pdfJsReady;
@@ -75,10 +67,10 @@
       display: flex;
       flex-direction: column;
     }
-    /* Screens */
     .screen { flex: 1; display: flex; flex-direction: column; animation: fadeIn 0.25s ease; }
     .screen.hidden { display: none !important; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
     /* Header */
     .app-header { padding: 32px 0 20px; text-align: center; }
     .app-logo {
@@ -92,6 +84,7 @@
     }
     .app-title { font-size: 1.6rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
     .app-subtitle { font-size: 0.9rem; color: var(--text-muted); }
+
     /* Cards */
     .card {
       background: var(--surface);
@@ -109,6 +102,7 @@
       color: var(--text-muted);
       margin-bottom: 14px;
     }
+
     /* Buttons */
     .btn {
       display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -130,21 +124,8 @@
     .btn-sm { padding: 10px 16px; font-size: 0.875rem; }
     .btn-row { display: flex; gap: 10px; }
     .btn-row .btn { flex: 1; }
-    /* Form */
-    .form-group { margin-bottom: 16px; }
-    .form-label { display: block; font-size: 0.875rem; font-weight: 500; color: var(--text); margin-bottom: 6px; }
-    .form-input {
-      width: 100%; padding: 13px 14px;
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius-sm);
-      font-size: 1rem; color: var(--text);
-      background: var(--surface);
-      transition: border-color 0.2s;
-      outline: none; font-family: inherit;
-    }
-    .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
-    .form-hint { font-size: 0.75rem; color: var(--text-light); margin-top: 5px; }
-    /* Upload zone */
+
+    /* Upload */
     .upload-zone {
       border: 2.5px dashed var(--border);
       border-radius: var(--radius);
@@ -155,26 +136,18 @@
       background: var(--background);
       position: relative;
     }
-    .upload-zone:hover, .upload-zone.drag-over {
-      border-color: var(--primary);
-      background: var(--primary-light);
-    }
+    .upload-zone:hover, .upload-zone.drag-over { border-color: var(--primary); background: var(--primary-light); }
     .upload-zone input[type="file"] { display: none; }
     .upload-icon { font-size: 2.8rem; margin-bottom: 12px; display: block; }
     .upload-zone h3 { font-size: 1rem; font-weight: 600; margin-bottom: 6px; }
     .upload-zone p { font-size: 0.85rem; color: var(--text-muted); }
-    .upload-formats {
-      display: flex; gap: 6px; justify-content: center;
-      flex-wrap: wrap; margin-top: 14px;
-    }
+    .upload-formats { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
     .format-badge {
       padding: 3px 10px;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 99px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--text-muted);
+      font-size: 0.75rem; font-weight: 600; color: var(--text-muted);
     }
     .file-selected {
       display: flex; align-items: center; gap: 10px;
@@ -189,6 +162,7 @@
     .file-name { font-weight: 600; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .file-size { font-size: 0.75rem; color: var(--text-muted); }
     .file-remove { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1.2rem; padding: 4px; }
+
     /* Difficulty */
     .difficulty-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .diff-btn {
@@ -196,34 +170,27 @@
       border-radius: var(--radius-sm);
       border: 2px solid var(--border);
       background: var(--surface);
-      cursor: pointer;
-      text-align: center;
-      transition: all 0.15s;
-      font-family: inherit;
+      cursor: pointer; text-align: center;
+      transition: all 0.15s; font-family: inherit;
     }
     .diff-btn.active { border-color: var(--primary); background: var(--primary-light); }
     .diff-btn .diff-icon { font-size: 1.6rem; display: block; margin-bottom: 4px; }
     .diff-btn .diff-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); }
     .diff-btn.active .diff-label { color: var(--primary); }
-    /* Saved quiz banner */
-    .saved-banner {
-      background: linear-gradient(135deg, #fef3c7, #fffbeb);
-      border: 1.5px solid #fbbf24;
-      border-radius: var(--radius);
+
+    /* iOS hint */
+    .ios-hint {
+      display: flex; align-items: flex-start; gap: 12px;
       padding: 14px 16px;
+      background: #f0f9ff;
+      border: 1.5px solid #bae6fd;
+      border-radius: var(--radius);
       margin-bottom: 14px;
-      display: flex; align-items: center; gap: 12px;
     }
-    .saved-banner-icon { font-size: 1.5rem; flex-shrink: 0; }
-    .saved-banner-text { flex: 1; }
-    .saved-banner-title { font-weight: 600; font-size: 0.9rem; color: #92400e; }
-    .saved-banner-sub { font-size: 0.78rem; color: #b45309; }
-    .saved-banner-btn {
-      background: #f59e0b; color: white;
-      border: none; border-radius: var(--radius-sm);
-      padding: 8px 14px; font-size: 0.8rem; font-weight: 600;
-      cursor: pointer; font-family: inherit; white-space: nowrap;
-    }
+    .ios-hint-icon { font-size: 1.6rem; flex-shrink: 0; }
+    .ios-hint-title { font-weight: 600; font-size: 0.88rem; color: #0369a1; margin-bottom: 4px; }
+    .ios-hint-desc { font-size: 0.8rem; color: #0284c7; line-height: 1.5; }
+
     /* Loading screen */
     .loading-screen {
       flex: 1; display: flex; flex-direction: column;
@@ -238,15 +205,90 @@
       animation: spin 0.8s linear infinite;
       margin: 0 auto 24px;
     }
+    .spinner-sm {
+      display: inline-block;
+      width: 20px; height: 20px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      vertical-align: middle;
+      flex-shrink: 0;
+    }
     @keyframes spin { to { transform: rotate(360deg); } }
     .loading-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; }
     .loading-sub { font-size: 0.875rem; color: var(--text-muted); }
-    /* Progress bar */
-    .progress-wrapper { padding: 20px 0 8px; }
-    .progress-info { display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--text-muted); margin-bottom: 8px; }
-    .progress-bar { height: 5px; background: var(--border); border-radius: 99px; overflow: hidden; }
-    .progress-fill { height: 100%; background: var(--primary); border-radius: 99px; transition: width 0.4s ease; }
-    /* Quiz */
+
+    /* Topics screen */
+    .topic-item {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 12px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+      background: var(--surface);
+    }
+    .topic-item:hover { border-color: var(--primary-border); background: var(--primary-light); }
+    .topic-item.selected { border-color: var(--primary); background: var(--primary-light); }
+    .topic-check {
+      width: 22px; height: 22px;
+      border: 2px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface);
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; color: white;
+      transition: all 0.15s;
+      margin-top: 1px;
+    }
+    .topic-item.selected .topic-check { background: var(--primary); border-color: var(--primary); }
+    .topic-item.selected .topic-check::after { content: '✓'; }
+    .topic-name { font-weight: 600; font-size: 0.92rem; color: var(--text); margin-bottom: 2px; }
+    .topic-desc { font-size: 0.78rem; color: var(--text-muted); line-height: 1.4; }
+
+    /* Stats bar */
+    .stats-bar {
+      display: flex; gap: 8px;
+      padding: 12px 0 8px;
+    }
+    .stat-item {
+      flex: 1; text-align: center;
+      padding: 10px 6px;
+      background: var(--surface);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+    .stat-num { display: block; font-size: 1.3rem; font-weight: 800; color: var(--text); }
+    .stat-label { font-size: 0.7rem; color: var(--text-muted); font-weight: 500; }
+    .stat-item.stat-correct .stat-num { color: var(--success); }
+    .stat-item.stat-wrong .stat-num { color: var(--error); }
+
+    /* Topic chip */
+    .topic-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 5px 12px;
+      background: var(--primary-light);
+      border: 1px solid var(--primary-border);
+      border-radius: 99px;
+      font-size: 0.78rem; font-weight: 600; color: var(--primary);
+      margin-bottom: 10px;
+      max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+
+    /* Mode badge */
+    .mode-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px;
+      border-radius: 99px;
+      font-size: 0.73rem; font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .badge-retry { background: #fef3c7; color: #92400e; }
+    .badge-review { background: #f0fdf4; color: #166534; }
+
+    /* Question type badge */
     .q-type-badge {
       display: inline-flex; align-items: center; gap: 5px;
       padding: 4px 12px; border-radius: 99px;
@@ -254,8 +296,20 @@
       margin-bottom: 14px;
     }
     .badge-mc { background: #ede9fe; color: #6d28d9; }
-    .badge-open { background: #fce7f3; color: #be185d; }
+    .badge-tf { background: #fce7f3; color: #be185d; }
+    .badge-open { background: #fff7ed; color: #c2410c; }
+    .badge-explain { background: #f0fdf4; color: #166534; }
+
+    /* Question loading */
+    .q-loading {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      padding: 30px 0;
+      color: var(--text-muted); font-size: 0.9rem;
+    }
+
+    /* Question */
     .q-text { font-size: 1.05rem; font-weight: 500; color: var(--text); line-height: 1.65; margin-bottom: 22px; }
+
     /* MC Options */
     .options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
     .option-btn {
@@ -276,27 +330,43 @@
       width: 30px; height: 30px; border-radius: 50%;
       background: var(--background);
       display: flex; align-items: center; justify-content: center;
-      font-weight: 700; font-size: 0.82rem;
-      flex-shrink: 0;
-      border: 1.5px solid var(--border);
-      color: var(--text-muted);
+      font-weight: 700; font-size: 0.82rem; flex-shrink: 0;
+      border: 1.5px solid var(--border); color: var(--text-muted);
     }
     .option-btn.correct .option-letter { border-color: var(--success); color: var(--success); background: white; }
     .option-btn.wrong .option-letter { border-color: var(--error); color: var(--error); background: white; }
-    .explanation {
+
+    /* True/False */
+    .tf-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .tf-btn {
+      padding: 18px 12px;
+      border-radius: var(--radius);
+      border: 2px solid var(--border);
+      background: var(--surface);
+      cursor: pointer; font-family: inherit;
+      font-size: 1rem; font-weight: 700;
+      transition: all 0.15s; color: var(--text);
+      text-align: center;
+    }
+    .tf-btn:hover:not(:disabled) { border-color: var(--primary); background: var(--primary-light); }
+    .tf-btn.correct { border-color: var(--success) !important; background: var(--success-light) !important; color: var(--success) !important; }
+    .tf-btn.wrong { border-color: var(--error) !important; background: var(--error-light) !important; color: var(--error) !important; }
+    .tf-btn:disabled { cursor: default; }
+
+    /* Feedback */
+    .feedback-box {
       padding: 14px 16px;
       border-radius: var(--radius-sm);
-      background: #f0fdf4;
-      border-left: 4px solid var(--success);
       font-size: 0.875rem;
-      color: #166534;
-      margin-bottom: 16px;
-      display: none;
+      margin-bottom: 12px;
       line-height: 1.6;
+      display: none;
     }
-    .explanation.wrong-exp { background: #fff1f2; border-color: var(--error); color: #991b1b; }
-    .explanation.show { display: block; }
-    /* Open question */
+    .feedback-box.show { display: block; }
+    .feedback-correct { background: #f0fdf4; border-left: 4px solid var(--success); color: #166534; }
+    .feedback-wrong { background: #fff1f2; border-left: 4px solid var(--error); color: #991b1b; }
+
+    /* Open / Explain */
     .answer-textarea {
       width: 100%; min-height: 110px;
       padding: 12px 14px;
@@ -304,12 +374,17 @@
       border-radius: var(--radius-sm);
       font-size: 0.95rem; color: var(--text);
       resize: vertical; font-family: inherit;
-      line-height: 1.5; outline: none;
-      background: var(--surface);
+      line-height: 1.5; outline: none; background: var(--surface);
       transition: border-color 0.2s;
       margin-bottom: 12px;
     }
     .answer-textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    .evaluating-row {
+      display: none; align-items: center; gap: 8px;
+      font-size: 0.875rem; color: var(--text-muted);
+      padding: 10px 0;
+    }
+    .evaluating-row.show { display: flex; }
     .model-answer {
       padding: 14px 16px;
       background: var(--primary-light);
@@ -323,18 +398,12 @@
     .model-answer-text { font-size: 0.875rem; color: var(--text); line-height: 1.6; }
     .keywords-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
     .keyword {
-      padding: 2px 8px;
-      background: white;
-      border: 1px solid var(--primary-border);
-      border-radius: 99px;
-      font-size: 0.72rem;
-      color: var(--primary);
-      font-weight: 500;
+      padding: 2px 8px; background: white;
+      border: 1px solid var(--primary-border); border-radius: 99px;
+      font-size: 0.72rem; color: var(--primary); font-weight: 500;
     }
     .keyword.matched { background: #dcfce7; border-color: #86efac; color: var(--success); }
-    .self-eval { display: none; gap: 10px; margin-bottom: 14px; }
-    .self-eval.show { display: flex; }
-    .self-eval-label { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 500; }
+
     /* Results */
     .score-wrap { text-align: center; padding: 24px 0 20px; }
     .score-ring {
@@ -347,25 +416,9 @@
     .score-inner { position: relative; z-index: 1; text-align: center; }
     .score-num { font-size: 2.2rem; font-weight: 800; color: var(--text); line-height: 1; }
     .score-den { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; }
-    .score-pct { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
     .score-msg { font-size: 1.1rem; font-weight: 600; color: var(--text); }
     .score-sub { font-size: 0.875rem; color: var(--text-muted); margin-top: 4px; }
-    .review-section { margin-bottom: 14px; }
-    .review-title { font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 10px; }
-    .review-item {
-      padding: 12px 14px;
-      border-radius: var(--radius-sm);
-      background: var(--surface);
-      border-left: 3.5px solid var(--border);
-      margin-bottom: 8px;
-      font-size: 0.86rem;
-    }
-    .review-item.correct-item { border-color: var(--success); }
-    .review-item.wrong-item { border-color: var(--error); }
-    .review-q { font-weight: 500; color: var(--text); margin-bottom: 4px; line-height: 1.4; }
-    .review-a { color: var(--text-muted); font-size: 0.8rem; }
-    .review-a strong { color: var(--success); }
-    .review-a .wrong-ans { color: var(--error); text-decoration: line-through; margin-right: 4px; }
+
     /* Toast */
     #toast {
       position: fixed; bottom: 24px; left: 50%;
@@ -380,13 +433,7 @@
     #toast.show { transform: translateX(-50%) translateY(0); }
     #toast.err { background: var(--error); }
     #toast.ok { background: var(--success); }
-    /* Misc */
-    .section-gap { height: 8px; }
-    .text-center { text-align: center; }
-    .text-muted { color: var(--text-muted); font-size: 0.875rem; }
-    .mt-8 { margin-top: 8px; }
-    .mt-16 { margin-top: 16px; }
-    /* iOS safe area */
+
     @supports (padding-bottom: env(safe-area-inset-bottom)) {
       #app { padding-bottom: calc(40px + env(safe-area-inset-bottom)); }
     }
@@ -400,17 +447,16 @@
   <div id="screen-upload" class="screen hidden">
     <div class="app-header">
       <div class="app-logo">📚</div>
-      <h1 class="app-title">Nový kvíz</h1>
-      <p class="app-subtitle">Nahrajte text a zvolte obtížnost</p>
+      <h1 class="app-title">Kvízový Průvodce</h1>
+      <p class="app-subtitle">Nahrajte text a procvičujte libovolně dlouho</p>
     </div>
 
-    <div id="saved-banner" class="saved-banner hidden">
-      <div class="saved-banner-icon">💾</div>
-      <div class="saved-banner-text">
-        <div class="saved-banner-title">Uložený kvíz</div>
-        <div class="saved-banner-sub" id="saved-banner-sub">Pokračovat v předchozím kvízu?</div>
+    <div class="ios-hint">
+      <div class="ios-hint-icon">📱</div>
+      <div>
+        <div class="ios-hint-title">Přidat na plochu iPhonu</div>
+        <div class="ios-hint-desc">V Safari klepněte na <strong>ikonu sdílení</strong> (čtvereček se šipkou nahoru) → <strong>Přidat na plochu</strong></div>
       </div>
-      <button class="saved-banner-btn" id="btn-resume">Pokračovat</button>
     </div>
 
     <div class="card">
@@ -436,9 +482,37 @@
       </div>
     </div>
 
+    <button class="btn btn-primary" id="btn-analyze" disabled>
+      🔍 Analyzovat text
+    </button>
+  </div>
+
+  <!-- ===== SCREEN: ANALYZING ===== -->
+  <div id="screen-analyzing" class="screen hidden">
+    <div class="loading-screen">
+      <div class="spinner"></div>
+      <div class="loading-title" id="analyzing-title">Analyzuji text…</div>
+      <div class="loading-sub" id="analyzing-sub">Rozpoznávám témata a kapitoly</div>
+    </div>
+  </div>
+
+  <!-- ===== SCREEN: TOPICS ===== -->
+  <div id="screen-topics" class="screen hidden">
+    <div class="app-header">
+      <div class="app-logo">📋</div>
+      <h1 class="app-title">Vyberte témata</h1>
+      <p class="app-subtitle" id="topics-file-name"></p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📚 Témata v dokumentu</div>
+      <div id="topics-list"></div>
+      <button class="btn btn-ghost btn-sm" id="btn-select-all" style="margin-top: 8px;">Vybrat vše</button>
+    </div>
+
     <div class="card">
       <div class="card-title">⚙️ Obtížnost</div>
-      <div class="difficulty-grid">
+      <div class="difficulty-grid" id="topics-diff-grid">
         <button class="diff-btn" data-diff="easy">
           <span class="diff-icon">🟢</span>
           <span class="diff-label">Lehká</span>
@@ -454,68 +528,99 @@
       </div>
     </div>
 
-    <button class="btn btn-primary" id="btn-generate" disabled>
-      🤖 Generovat kvíz
+    <button class="btn btn-primary" id="btn-start" disabled>
+      🚀 Začít procvičovat
     </button>
-
-  </div>
-
-  <!-- ===== SCREEN: GENERATING ===== -->
-  <div id="screen-generating" class="screen hidden">
-    <div class="loading-screen">
-      <div class="spinner"></div>
-      <div class="loading-title">Generuji kvíz...</div>
-      <div class="loading-sub" id="gen-status">Analyzuji text a tvořím otázky</div>
-      <p class="text-muted mt-16" style="font-size: 0.8rem;">Může to trvat 10–20 vteřin</p>
-    </div>
+    <button class="btn btn-ghost btn-sm" id="btn-back-upload" style="margin-top: 10px;">
+      ← Zpět
+    </button>
   </div>
 
   <!-- ===== SCREEN: QUIZ ===== -->
   <div id="screen-quiz" class="screen hidden">
-    <div class="progress-wrapper">
-      <div class="progress-info">
-        <span id="q-counter">Otázka 1 / 10</span>
-        <span id="q-score-live">0 správně</span>
+    <div class="stats-bar">
+      <div class="stat-item">
+        <span class="stat-num" id="stat-answered">0</span>
+        <span class="stat-label">otázek</span>
       </div>
-      <div class="progress-bar">
-        <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+      <div class="stat-item stat-correct">
+        <span class="stat-num" id="stat-correct">0</span>
+        <span class="stat-label">správně</span>
       </div>
-    </div>
-
-    <div class="card" style="flex: 1; margin-bottom: 14px;">
-      <div id="q-type-badge" class="q-type-badge badge-mc">📝 Výběr z možností</div>
-      <div id="q-text" class="q-text"></div>
-
-      <!-- MC Options -->
-      <div id="mc-area">
-        <div class="options" id="options-list"></div>
-        <div id="explanation" class="explanation"></div>
-      </div>
-
-      <!-- Open Question -->
-      <div id="open-area" style="display:none;">
-        <textarea id="open-answer" class="answer-textarea" placeholder="Napište vaši odpověď..."></textarea>
-        <button class="btn btn-secondary btn-sm" id="btn-check-open" style="margin-bottom: 12px;">
-          🔍 Zkontrolovat odpověď
-        </button>
-        <div id="model-answer" class="model-answer">
-          <div class="model-answer-label">Vzorová odpověď</div>
-          <div class="model-answer-text" id="model-answer-text"></div>
-          <div class="keywords-row" id="keywords-row"></div>
-        </div>
-        <div class="self-eval-label" id="self-eval-label" style="display:none;">Odpověděli jste správně?</div>
-        <div class="self-eval" id="self-eval">
-          <button class="btn btn-success btn-sm" id="btn-self-yes">✓ Ano</button>
-          <button class="btn btn-error btn-sm" id="btn-self-no">✗ Ne</button>
-        </div>
+      <div class="stat-item stat-wrong">
+        <span class="stat-num" id="stat-wrong">0</span>
+        <span class="stat-label">špatně</span>
       </div>
     </div>
 
-    <button class="btn btn-primary" id="btn-next" disabled>
+    <div id="q-topic-chip" class="topic-chip" style="display:none;"></div>
+
+    <div class="card" id="question-card" style="flex:1; margin-bottom:14px;">
+      <!-- Loading state -->
+      <div id="q-loading" class="q-loading">
+        <div class="spinner-sm"></div>
+        <span>Generuji otázku…</span>
+      </div>
+
+      <!-- Question content -->
+      <div id="q-content" style="display:none;">
+        <div id="q-mode-badge" class="mode-badge" style="display:none;"></div>
+        <div id="q-type-badge" class="q-type-badge"></div>
+        <div id="q-text" class="q-text"></div>
+
+        <!-- MC -->
+        <div id="mc-area" style="display:none;">
+          <div class="options" id="options-list"></div>
+          <div id="mc-feedback" class="feedback-box"></div>
+        </div>
+
+        <!-- True/False -->
+        <div id="tf-area" style="display:none;">
+          <div class="tf-btns">
+            <button class="tf-btn" id="btn-true">✓ Pravda</button>
+            <button class="tf-btn" id="btn-false">✗ Nepravda</button>
+          </div>
+          <div id="tf-feedback" class="feedback-box"></div>
+        </div>
+
+        <!-- Open -->
+        <div id="open-area" style="display:none;">
+          <textarea id="open-answer" class="answer-textarea" placeholder="Napište vaši odpověď…"></textarea>
+          <button class="btn btn-secondary btn-sm" id="btn-check-open" style="margin-bottom:12px;">🔍 Zkontrolovat</button>
+          <div id="open-evaluating" class="evaluating-row">
+            <div class="spinner-sm"></div>
+            <span>AI hodnotí vaši odpověď…</span>
+          </div>
+          <div id="open-feedback" class="feedback-box"></div>
+          <div id="open-model" class="model-answer">
+            <div class="model-answer-label">Vzorová odpověď</div>
+            <div class="model-answer-text" id="open-model-text"></div>
+            <div class="keywords-row" id="open-keywords"></div>
+          </div>
+        </div>
+
+        <!-- Explain -->
+        <div id="explain-area" style="display:none;">
+          <textarea id="explain-answer" class="answer-textarea" placeholder="Napište vysvětlení…" style="min-height:140px;"></textarea>
+          <button class="btn btn-secondary btn-sm" id="btn-check-explain" style="margin-bottom:12px;">🔍 Zkontrolovat</button>
+          <div id="explain-evaluating" class="evaluating-row">
+            <div class="spinner-sm"></div>
+            <span>AI hodnotí vaši odpověď…</span>
+          </div>
+          <div id="explain-feedback" class="feedback-box"></div>
+          <div id="explain-model" class="model-answer">
+            <div class="model-answer-label">Vzorová odpověď</div>
+            <div class="model-answer-text" id="explain-model-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="btn-next" style="display:none;">
       Další otázka →
     </button>
-    <button class="btn btn-ghost btn-sm" id="btn-quit-quiz" style="margin-top: 10px;">
-      Ukončit kvíz
+    <button class="btn btn-ghost btn-sm" id="btn-end-session" style="margin-top: 10px;">
+      Ukončit sezení
     </button>
   </div>
 
@@ -534,22 +639,17 @@
           </svg>
           <div class="score-inner">
             <div class="score-num" id="score-num">0</div>
-            <div class="score-den" id="score-den">/ 10</div>
+            <div class="score-den" id="score-den">/ 0</div>
           </div>
         </div>
-        <div class="score-msg" id="score-msg">Výsledky kvízu</div>
+        <div class="score-msg" id="score-msg">Výsledky sezení</div>
         <div class="score-sub" id="score-sub"></div>
       </div>
     </div>
 
-    <div class="review-section" id="review-section">
-      <div class="review-title">Přehled odpovědí</div>
-      <div id="review-list"></div>
-    </div>
-
     <div class="btn-row" style="margin-bottom: 10px;">
-      <button class="btn btn-secondary" id="btn-retry">🔄 Znovu</button>
-      <button class="btn btn-primary" id="btn-new-quiz">📄 Nový kvíz</button>
+      <button class="btn btn-secondary" id="btn-continue">▶ Pokračovat</button>
+      <button class="btn btn-primary" id="btn-new-session">📄 Nový text</button>
     </div>
   </div>
 
@@ -574,13 +674,21 @@ const Store = {
 // APP STATE
 // ============================================================
 const state = {
-  questions: null,
-  currentQ: 0,
-  answers: [],        // { correct: bool, userAnswer: string, type: string }
-  difficulty: 'medium',
   text: '',
   fileName: '',
-  answeredCurrent: false
+  topics: [],
+  selectedTopics: [],
+  difficulty: 'medium',
+  // Session
+  questionsAnswered: 0,
+  correctCount: 0,
+  askedQuestions: [],     // question texts (avoid repeats)
+  retryQueue: [],         // [ { question, delay } ]
+  reviewQueue: [],        // [ { question, dueAt } ]
+  currentQuestion: null,
+  answeredCurrent: false,
+  currentTopicIdx: 0,
+  sessionActive: false
 };
 
 // ============================================================
@@ -637,16 +745,13 @@ const FileParser = {
           const compData = bytes.slice(dataStart, dataStart + compSize);
           if (fn === 'word/document.xml' || fn.endsWith('.xml')) {
             try {
-              if (compression === 0) {
-                files[fn] = compData;
-              } else if (compression === 8) {
-                files[fn] = await this.inflateRaw(compData);
-              }
-            } catch { /* skip undecompressible files */ }
+              if (compression === 0) files[fn] = compData;
+              else if (compression === 8) files[fn] = await this.inflateRaw(compData);
+            } catch {}
           }
           offset = dataStart + compSize;
         } else if (bytes[offset+2] === 0x01 && bytes[offset+3] === 0x02) {
-          break; // Central directory header – stop
+          break;
         } else { offset++; }
       } else { offset++; }
     }
@@ -684,9 +789,7 @@ const FileParser = {
   },
 
   async parsePDF(file) {
-    // Lazy-load PDF.js from CDN (cached by SW after first use)
     await window.loadPdfJs();
-
     const buffer = await file.arrayBuffer();
     let pdf;
     try {
@@ -694,60 +797,66 @@ const FileParser = {
     } catch (e) {
       throw new Error('Nepodařilo se otevřít PDF: ' + (e.message || 'neznámá chyba'));
     }
-
     let fullText = '';
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
       const page = await pdf.getPage(pageNum);
       const content = await page.getTextContent();
-      // Join items; insert space when items don't end/start with whitespace
       let pageText = '';
       for (let i = 0; i < content.items.length; i++) {
         const item = content.items[i];
         if (!item.str) continue;
         pageText += item.str;
-        // Add space between words if needed
         const next = content.items[i + 1];
-        if (next && item.str.slice(-1) !== ' ' && next.str[0] !== ' ') {
-          pageText += ' ';
-        }
+        if (next && item.str.slice(-1) !== ' ' && next.str[0] !== ' ') pageText += ' ';
       }
       fullText += pageText.trim() + '\n';
     }
-
     fullText = fullText.replace(/[ \t]{2,}/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
-
     if (fullText.length < 50) {
-      throw new Error(
-        'PDF neobsahuje extrahovatelný text. Soubor je pravděpodobně naskenovaný obrázek nebo chráněný heslem.'
-      );
+      throw new Error('PDF neobsahuje extrahovatelný text. Soubor je pravděpodobně naskenovaný nebo chráněný heslem.');
     }
     return fullText;
   }
 };
 
 // ============================================================
-// API CLIENT – volá Vercel serverless funkci /api/generate
+// API CLIENT
 // ============================================================
 const API = {
-  async generateQuestions(text, difficulty) {
-    const resp = await fetch('/api/generate', {
+  async analyzeText(text) {
+    const resp = await fetch('/api/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, difficulty })
+      body: JSON.stringify({ text })
     });
-
     const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) throw new Error(data.error || `Chyba serveru: ${resp.status}`);
+    return data.topics;
+  },
 
+  async generateQuestion(text, topic, questionType, askedQuestions, difficulty) {
+    const resp = await fetch('/api/question', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, topic, questionType, askedQuestions: askedQuestions.slice(-20), difficulty })
+    });
+    const data = await resp.json().catch(() => ({}));
     if (!resp.ok) {
-      if (resp.status === 429) throw new Error('Překročen limit požadavků. Zkuste to za chvíli.');
-      if (resp.status === 503) throw new Error('Služba je nedostupná. Zkontrolujte připojení.');
+      if (resp.status === 429) throw new Error('Překročen limit požadavků. Chvíli počkejte.');
       throw new Error(data.error || `Chyba serveru: ${resp.status}`);
     }
+    return data.question;
+  },
 
-    if (!Array.isArray(data.questions) || data.questions.length === 0) {
-      throw new Error('Server nevrácel žádné otázky. Zkuste to znovu.');
-    }
-    return data.questions;
+  async evaluateAnswer(question, userAnswer, expectedAnswer) {
+    const resp = await fetch('/api/evaluate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question, userAnswer, expectedAnswer })
+    });
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) throw new Error(data.error || `Chyba serveru: ${resp.status}`);
+    return { correct: data.correct, feedback: data.feedback };
   }
 };
 
@@ -779,61 +888,243 @@ function getFileIcon(ext) {
   return { pdf: '📕', docx: '📘', txt: '📄' }[ext] || '📄';
 }
 
-// ============================================================
-// QUIZ RENDERING
-// ============================================================
-function renderQuestion() {
-  const q = state.questions[state.currentQ];
-  const total = state.questions.length;
-  state.answeredCurrent = false;
+function pickQuestionType() {
+  const pool = ['multiple_choice', 'multiple_choice', 'true_false', 'open', 'open', 'explain'];
+  return pool[Math.floor(Math.random() * pool.length)];
+}
 
-  // Progress
-  document.getElementById('q-counter').textContent = `Otázka ${state.currentQ + 1} / ${total}`;
-  const correct = state.answers.filter(a => a.correct).length;
-  document.getElementById('q-score-live').textContent = `${correct} správně`;
-  document.getElementById('progress-fill').style.width = `${(state.currentQ / total) * 100}%`;
+// ============================================================
+// UPLOAD SCREEN
+// ============================================================
+function setFile(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  document.getElementById('file-icon').textContent = getFileIcon(ext);
+  document.getElementById('file-name').textContent = file.name;
+  document.getElementById('file-size').textContent = formatFileSize(file.size);
+  document.getElementById('file-selected').classList.remove('hidden');
+  document.getElementById('upload-zone').style.display = 'none';
 
-  // Question type badge
-  const badge = document.getElementById('q-type-badge');
-  if (q.type === 'multiple_choice') {
-    badge.className = 'q-type-badge badge-mc';
-    badge.textContent = '📝 Výběr z možností';
+  FileParser.parse(file).then(text => {
+    state.text = text;
+    state.fileName = file.name;
+    document.getElementById('btn-analyze').disabled = false;
+    showToast(`Soubor načten (${Math.round(text.length / 1000)}k znaků)`, 'ok');
+  }).catch(err => {
+    showToast(err.message, 'err');
+    removeFile();
+  });
+}
+
+function removeFile() {
+  state.text = '';
+  state.fileName = '';
+  document.getElementById('file-selected').classList.add('hidden');
+  document.getElementById('upload-zone').style.display = '';
+  document.getElementById('btn-analyze').disabled = true;
+  document.getElementById('file-input').value = '';
+}
+
+// ============================================================
+// TOPICS SCREEN
+// ============================================================
+function renderTopics(topics) {
+  state.topics = topics;
+  state.selectedTopics = [...topics]; // all selected by default
+  document.getElementById('topics-file-name').textContent = state.fileName;
+
+  const list = document.getElementById('topics-list');
+  list.innerHTML = '';
+  topics.forEach(topic => {
+    const item = document.createElement('div');
+    item.className = 'topic-item selected';
+    item.dataset.id = topic.id;
+    item.innerHTML = `
+      <div class="topic-check"></div>
+      <div>
+        <div class="topic-name">${topic.name}</div>
+        <div class="topic-desc">${topic.description}</div>
+      </div>`;
+    item.addEventListener('click', () => toggleTopic(topic, item));
+    list.appendChild(item);
+  });
+
+  updateStartButton();
+  showScreen('screen-topics');
+}
+
+function toggleTopic(topic, itemEl) {
+  const idx = state.selectedTopics.findIndex(t => t.id === topic.id);
+  if (idx >= 0) {
+    state.selectedTopics.splice(idx, 1);
+    itemEl.classList.remove('selected');
   } else {
-    badge.className = 'q-type-badge badge-open';
-    badge.textContent = '✏️ Otevřená otázka';
+    state.selectedTopics.push(topic);
+    itemEl.classList.add('selected');
   }
+  updateStartButton();
+}
 
-  // Question text
-  document.getElementById('q-text').textContent = q.question;
+function updateStartButton() {
+  document.getElementById('btn-start').disabled = state.selectedTopics.length === 0;
+}
 
-  // Show/hide areas
-  const mcArea = document.getElementById('mc-area');
-  const openArea = document.getElementById('open-area');
-  const btnNext = document.getElementById('btn-next');
+// ============================================================
+// ANALYZE FLOW
+// ============================================================
+async function analyzeText() {
+  if (!state.text) { showToast('Nejprve nahrajte soubor', 'err'); return; }
+  showScreen('screen-analyzing');
+  document.getElementById('analyzing-title').textContent = 'Analyzuji text…';
+  document.getElementById('analyzing-sub').textContent = 'Rozpoznávám témata a kapitoly';
 
-  btnNext.disabled = true;
-  btnNext.textContent = state.currentQ < total - 1 ? 'Další otázka →' : 'Zobrazit výsledky';
-
-  if (q.type === 'multiple_choice') {
-    mcArea.style.display = 'block';
-    openArea.style.display = 'none';
-    renderMCOptions(q);
-    document.getElementById('explanation').className = 'explanation';
-    document.getElementById('explanation').textContent = '';
-  } else {
-    mcArea.style.display = 'none';
-    openArea.style.display = 'block';
-    document.getElementById('open-answer').value = '';
-    document.getElementById('open-answer').disabled = false;
-    document.getElementById('btn-check-open').disabled = false;
-    document.getElementById('btn-check-open').style.display = '';
-    document.getElementById('model-answer').className = 'model-answer';
-    document.getElementById('self-eval').className = 'self-eval';
-    document.getElementById('self-eval-label').style.display = 'none';
+  try {
+    const topics = await API.analyzeText(state.text);
+    renderTopics(topics);
+  } catch (err) {
+    showToast(err.message, 'err');
+    showScreen('screen-upload');
   }
 }
 
-function renderMCOptions(q) {
+// ============================================================
+// SESSION / QUIZ
+// ============================================================
+function startSession() {
+  state.questionsAnswered = 0;
+  state.correctCount = 0;
+  state.askedQuestions = [];
+  state.retryQueue = [];
+  state.reviewQueue = [];
+  state.currentTopicIdx = 0;
+  state.answeredCurrent = false;
+  state.sessionActive = true;
+
+  updateStats();
+  showScreen('screen-quiz');
+  loadNextQuestion();
+}
+
+function updateStats() {
+  document.getElementById('stat-answered').textContent = state.questionsAnswered;
+  document.getElementById('stat-correct').textContent = state.correctCount;
+  document.getElementById('stat-wrong').textContent = state.questionsAnswered - state.correctCount;
+}
+
+async function loadNextQuestion() {
+  // Show loading
+  document.getElementById('q-loading').style.display = 'flex';
+  document.getElementById('q-content').style.display = 'none';
+  document.getElementById('btn-next').style.display = 'none';
+
+  // 1. Check retry queue
+  const retryIdx = state.retryQueue.findIndex(item => item.delay <= 0);
+  if (retryIdx >= 0) {
+    const item = state.retryQueue.splice(retryIdx, 1)[0];
+    renderQuestion(item.question, 'retry');
+    return;
+  }
+
+  // 2. Check review queue
+  const reviewIdx = state.reviewQueue.findIndex(item => item.dueAt <= state.questionsAnswered);
+  if (reviewIdx >= 0) {
+    const item = state.reviewQueue.splice(reviewIdx, 1)[0];
+    renderQuestion(item.question, 'review');
+    return;
+  }
+
+  // 3. Generate new question
+  const topic = state.selectedTopics[state.currentTopicIdx % state.selectedTopics.length];
+  const qType = pickQuestionType();
+
+  try {
+    const question = await API.generateQuestion(
+      state.text,
+      topic.name,
+      qType,
+      state.askedQuestions,
+      state.difficulty
+    );
+    question._topicName = topic.name;
+    state.currentTopicIdx++;
+    renderQuestion(question, 'new');
+  } catch (err) {
+    document.getElementById('q-loading').style.display = 'none';
+    document.getElementById('q-content').style.display = 'block';
+    document.getElementById('q-text').textContent = '';
+    showToast(err.message + ' — zkuste znovu.', 'err');
+    // Show retry button
+    document.getElementById('btn-next').textContent = '🔄 Zkusit znovu';
+    document.getElementById('btn-next').style.display = 'block';
+    document.getElementById('btn-next').disabled = false;
+    state.answeredCurrent = true; // allow clicking next to retry
+    state._retryLoad = true;
+  }
+}
+
+function renderQuestion(question, mode) {
+  state.currentQuestion = question;
+  state.answeredCurrent = false;
+  state._retryLoad = false;
+
+  document.getElementById('q-loading').style.display = 'none';
+  document.getElementById('q-content').style.display = 'block';
+  document.getElementById('btn-next').style.display = 'none';
+
+  // Topic chip
+  const chip = document.getElementById('q-topic-chip');
+  if (question._topicName) {
+    chip.textContent = '📌 ' + question._topicName;
+    chip.style.display = 'inline-flex';
+  } else {
+    chip.style.display = 'none';
+  }
+
+  // Mode badge
+  const modeBadge = document.getElementById('q-mode-badge');
+  if (mode === 'retry') {
+    modeBadge.className = 'mode-badge badge-retry';
+    modeBadge.textContent = '🔄 Opakování – tuto otázku jste minule zodpověděli špatně';
+    modeBadge.style.display = 'inline-flex';
+  } else if (mode === 'review') {
+    modeBadge.className = 'mode-badge badge-review';
+    modeBadge.textContent = '📖 Připomenutí – procvičení správné odpovědi';
+    modeBadge.style.display = 'inline-flex';
+  } else {
+    modeBadge.style.display = 'none';
+  }
+
+  // Type badge
+  const typeBadge = document.getElementById('q-type-badge');
+  const typeMap = {
+    multiple_choice: ['badge-mc', '📝 Výběr z možností'],
+    true_false: ['badge-tf', '⚖️ Pravda / Nepravda'],
+    open: ['badge-open', '✏️ Krátká odpověď'],
+    explain: ['badge-explain', '💬 Vysvětlení']
+  };
+  const [cls, label] = typeMap[question.type] || typeMap.multiple_choice;
+  typeBadge.className = 'q-type-badge ' + cls;
+  typeBadge.textContent = label;
+
+  // Question text
+  document.getElementById('q-text').textContent = question.question;
+
+  // Hide all areas
+  ['mc-area', 'tf-area', 'open-area', 'explain-area'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+
+  if (question.type === 'multiple_choice') renderMC(question);
+  else if (question.type === 'true_false') renderTF(question);
+  else if (question.type === 'open') renderOpen(question);
+  else if (question.type === 'explain') renderExplain(question);
+}
+
+function renderMC(q) {
+  document.getElementById('mc-area').style.display = 'block';
+  document.getElementById('mc-feedback').className = 'feedback-box';
+  document.getElementById('mc-feedback').textContent = '';
+
   const list = document.getElementById('options-list');
   list.innerHTML = '';
   const letters = ['A', 'B', 'C', 'D'];
@@ -848,112 +1139,202 @@ function renderMCOptions(q) {
 
 function answerMC(chosen, q) {
   if (state.answeredCurrent) return;
-  state.answeredCurrent = true;
-
   const correct = typeof q.correct === 'number' ? q.correct : parseInt(q.correct) || 0;
   const isCorrect = chosen === correct;
 
-  state.answers.push({ correct: isCorrect, type: 'mc', chosen, correctIdx: correct });
-
-  // Update option buttons
-  const btns = document.querySelectorAll('.option-btn');
-  btns.forEach((btn, i) => {
+  document.querySelectorAll('.option-btn').forEach((btn, i) => {
     btn.disabled = true;
     if (i === correct) btn.classList.add('correct');
     if (i === chosen && !isCorrect) btn.classList.add('wrong');
   });
 
-  // Show explanation
   if (q.explanation) {
-    const exp = document.getElementById('explanation');
-    exp.className = 'explanation show' + (isCorrect ? '' : ' wrong-exp');
-    exp.textContent = (isCorrect ? '✓ Správně! ' : '✗ Špatně. ') + q.explanation;
+    const fb = document.getElementById('mc-feedback');
+    fb.className = 'feedback-box show ' + (isCorrect ? 'feedback-correct' : 'feedback-wrong');
+    fb.textContent = (isCorrect ? '✓ Správně! ' : '✗ Špatně. ') + q.explanation;
   }
 
-  // Update score
-  const correctCount = state.answers.filter(a => a.correct).length;
-  document.getElementById('q-score-live').textContent = `${correctCount} správně`;
-
-  document.getElementById('btn-next').disabled = false;
+  onAnswerSubmitted(isCorrect);
 }
 
-function checkOpenAnswer() {
-  const q = state.questions[state.currentQ];
-  const userAnswer = document.getElementById('open-answer').value.trim();
-  if (userAnswer.length < 2) {
-    showToast('Nejprve napište svou odpověď', 'err');
-    return;
+function renderTF(q) {
+  document.getElementById('tf-area').style.display = 'block';
+  document.getElementById('tf-feedback').className = 'feedback-box';
+  document.getElementById('tf-feedback').textContent = '';
+  document.getElementById('btn-true').className = 'tf-btn';
+  document.getElementById('btn-false').className = 'tf-btn';
+  document.getElementById('btn-true').disabled = false;
+  document.getElementById('btn-false').disabled = false;
+}
+
+function answerTF(userChoice, q) {
+  if (state.answeredCurrent) return;
+  const isCorrect = userChoice === q.correct;
+
+  document.getElementById('btn-true').disabled = true;
+  document.getElementById('btn-false').disabled = true;
+
+  const trueBtn = document.getElementById('btn-true');
+  const falseBtn = document.getElementById('btn-false');
+  if (q.correct === true) trueBtn.classList.add('correct');
+  else falseBtn.classList.add('correct');
+  if (!isCorrect) {
+    if (userChoice === true) trueBtn.classList.add('wrong');
+    else falseBtn.classList.add('wrong');
   }
+
+  if (q.explanation) {
+    const fb = document.getElementById('tf-feedback');
+    fb.className = 'feedback-box show ' + (isCorrect ? 'feedback-correct' : 'feedback-wrong');
+    fb.textContent = (isCorrect ? '✓ Správně! ' : '✗ Špatně. ') + q.explanation;
+  }
+
+  onAnswerSubmitted(isCorrect);
+}
+
+function renderOpen(q) {
+  document.getElementById('open-area').style.display = 'block';
+  document.getElementById('open-answer').value = '';
+  document.getElementById('open-answer').disabled = false;
+  document.getElementById('btn-check-open').disabled = false;
+  document.getElementById('btn-check-open').style.display = 'block';
+  document.getElementById('open-evaluating').className = 'evaluating-row';
+  document.getElementById('open-feedback').className = 'feedback-box';
+  document.getElementById('open-model').className = 'model-answer';
+}
+
+async function checkOpenAnswer(q) {
+  const userAnswer = document.getElementById('open-answer').value.trim();
+  if (userAnswer.length < 2) { showToast('Nejprve napište svou odpověď', 'err'); return; }
 
   document.getElementById('open-answer').disabled = true;
-  document.getElementById('btn-check-open').disabled = true;
   document.getElementById('btn-check-open').style.display = 'none';
+  document.getElementById('open-evaluating').className = 'evaluating-row show';
 
-  // Show model answer
-  document.getElementById('model-answer-text').textContent = q.answer || '';
-  document.getElementById('model-answer').classList.add('show');
+  try {
+    const { correct, feedback } = await API.evaluateAnswer(q.question, userAnswer, q.answer || '');
+    document.getElementById('open-evaluating').className = 'evaluating-row';
 
-  // Show keyword matching
-  const kwRow = document.getElementById('keywords-row');
-  kwRow.innerHTML = '';
-  if (Array.isArray(q.keywords) && q.keywords.length > 0) {
-    const lower = userAnswer.toLowerCase();
-    q.keywords.forEach(kw => {
-      const span = document.createElement('span');
-      span.className = 'keyword' + (lower.includes(kw.toLowerCase()) ? ' matched' : '');
-      span.textContent = kw;
-      kwRow.appendChild(span);
-    });
+    const fb = document.getElementById('open-feedback');
+    fb.className = 'feedback-box show ' + (correct ? 'feedback-correct' : 'feedback-wrong');
+    fb.textContent = (correct ? '✓ ' : '✗ ') + (feedback || (correct ? 'Správně!' : 'Nesprávně.'));
+
+    // Show model answer
+    if (q.answer) {
+      document.getElementById('open-model-text').textContent = q.answer;
+      const kwRow = document.getElementById('open-keywords');
+      kwRow.innerHTML = '';
+      if (Array.isArray(q.keywords) && q.keywords.length > 0) {
+        const lower = userAnswer.toLowerCase();
+        q.keywords.forEach(kw => {
+          const span = document.createElement('span');
+          span.className = 'keyword' + (lower.includes(kw.toLowerCase()) ? ' matched' : '');
+          span.textContent = kw;
+          kwRow.appendChild(span);
+        });
+      }
+      document.getElementById('open-model').className = 'model-answer show';
+    }
+
+    onAnswerSubmitted(correct);
+  } catch (err) {
+    document.getElementById('open-evaluating').className = 'evaluating-row';
+    showToast('Chyba při hodnocení: ' + err.message, 'err');
+    document.getElementById('btn-check-open').style.display = 'block';
+    document.getElementById('open-answer').disabled = false;
   }
-
-  // Show self-evaluation
-  document.getElementById('self-eval-label').style.display = '';
-  document.getElementById('self-eval').classList.add('show');
-
-  // Store user answer for review
-  state._pendingOpenAnswer = userAnswer;
 }
 
-function selfEval(isCorrect) {
+function renderExplain(q) {
+  document.getElementById('explain-area').style.display = 'block';
+  document.getElementById('explain-answer').value = '';
+  document.getElementById('explain-answer').disabled = false;
+  document.getElementById('btn-check-explain').disabled = false;
+  document.getElementById('btn-check-explain').style.display = 'block';
+  document.getElementById('explain-evaluating').className = 'evaluating-row';
+  document.getElementById('explain-feedback').className = 'feedback-box';
+  document.getElementById('explain-model').className = 'model-answer';
+}
+
+async function checkExplainAnswer(q) {
+  const userAnswer = document.getElementById('explain-answer').value.trim();
+  if (userAnswer.length < 10) { showToast('Nejprve napište vysvětlení', 'err'); return; }
+
+  document.getElementById('explain-answer').disabled = true;
+  document.getElementById('btn-check-explain').style.display = 'none';
+  document.getElementById('explain-evaluating').className = 'evaluating-row show';
+
+  try {
+    const { correct, feedback } = await API.evaluateAnswer(q.question, userAnswer, q.answer || '');
+    document.getElementById('explain-evaluating').className = 'evaluating-row';
+
+    const fb = document.getElementById('explain-feedback');
+    fb.className = 'feedback-box show ' + (correct ? 'feedback-correct' : 'feedback-wrong');
+    fb.textContent = (correct ? '✓ ' : '✗ ') + (feedback || (correct ? 'Správně!' : 'Nesprávně.'));
+
+    if (q.answer) {
+      document.getElementById('explain-model-text').textContent = q.answer;
+      document.getElementById('explain-model').className = 'model-answer show';
+    }
+
+    onAnswerSubmitted(correct);
+  } catch (err) {
+    document.getElementById('explain-evaluating').className = 'evaluating-row';
+    showToast('Chyba při hodnocení: ' + err.message, 'err');
+    document.getElementById('btn-check-explain').style.display = 'block';
+    document.getElementById('explain-answer').disabled = false;
+  }
+}
+
+function onAnswerSubmitted(isCorrect) {
   if (state.answeredCurrent) return;
   state.answeredCurrent = true;
 
-  state.answers.push({
-    correct: isCorrect,
-    type: 'open',
-    userAnswer: state._pendingOpenAnswer || ''
-  });
+  state.questionsAnswered++;
+  if (isCorrect) state.correctCount++;
 
-  document.getElementById('self-eval').className = 'self-eval';
-  document.getElementById('self-eval-label').style.display = 'none';
+  // Decrement retry delays
+  state.retryQueue.forEach(item => { item.delay--; });
 
-  const correctCount = state.answers.filter(a => a.correct).length;
-  document.getElementById('q-score-live').textContent = `${correctCount} správně`;
+  const q = state.currentQuestion;
 
-  document.getElementById('btn-next').disabled = false;
-}
-
-function nextQuestion() {
-  state.currentQ++;
-  if (state.currentQ >= state.questions.length) {
-    showResults();
+  if (!isCorrect) {
+    // Add to retry queue: re-ask after 3–5 questions
+    if (!state.retryQueue.some(i => i.question.question === q.question)) {
+      state.retryQueue.push({ question: q, delay: 3 + Math.floor(Math.random() * 3) });
+    }
   } else {
-    renderQuestion();
+    // Add to review queue: revisit after ~8–12 questions
+    if (!state.reviewQueue.some(i => i.question.question === q.question)) {
+      state.reviewQueue.push({ question: q, dueAt: state.questionsAnswered + 8 + Math.floor(Math.random() * 5) });
+    }
   }
+
+  // Track to avoid repeats (cap at 30)
+  if (!state.askedQuestions.includes(q.question)) {
+    state.askedQuestions.push(q.question);
+    if (state.askedQuestions.length > 30) state.askedQuestions.shift();
+  }
+
+  updateStats();
+
+  document.getElementById('btn-next').textContent = 'Další otázka →';
+  document.getElementById('btn-next').style.display = 'block';
+  document.getElementById('btn-next').disabled = false;
 }
 
 // ============================================================
 // RESULTS
 // ============================================================
-function showResults() {
+function endSession() {
+  state.sessionActive = false;
   showScreen('screen-results');
 
-  const total = state.questions.length;
-  const correct = state.answers.filter(a => a.correct).length;
-  const pct = Math.round((correct / total) * 100);
+  const total = state.questionsAnswered;
+  const correct = state.correctCount;
+  const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
 
-  // Score ring animation
-  const circumference = 2 * Math.PI * 60; // r=60
+  const circumference = 2 * Math.PI * 60;
   const arc = document.getElementById('score-arc');
   arc.style.strokeDashoffset = circumference;
   setTimeout(() => {
@@ -962,7 +1343,6 @@ function showResults() {
     arc.style.stroke = pct >= 70 ? '#16a34a' : pct >= 40 ? '#d97706' : '#dc2626';
   }, 100);
 
-  // Counter animation
   const numEl = document.getElementById('score-num');
   let count = 0;
   const inc = setInterval(() => {
@@ -974,190 +1354,34 @@ function showResults() {
   document.getElementById('score-den').textContent = `/ ${total}`;
 
   let msg, sub;
-  if (pct >= 90) { msg = '🏆 Výborně!'; sub = 'Skvělý výsledek, perfektní zvládnutí materiálu!'; }
-  else if (pct >= 70) { msg = '👍 Dobrá práce!'; sub = 'Látku máte dobře zvládnutou.'; }
-  else if (pct >= 50) { msg = '📖 Dobrý základ'; sub = 'Některé části si zaslouží opakování.'; }
-  else { msg = '💪 Pokračujte!'; sub = 'Text si projděte znovu a kvíz zopakujte.'; }
+  if (total === 0) { msg = 'Sezení ukončeno'; sub = 'Nebyly zodpovězeny žádné otázky.'; }
+  else if (pct >= 90) { msg = '🏆 Výborně!'; sub = `${correct} z ${total} otázek správně – skvělý výkon!`; }
+  else if (pct >= 70) { msg = '👍 Dobrá práce!'; sub = `${correct} z ${total} otázek správně.`; }
+  else if (pct >= 50) { msg = '📖 Dobrý základ'; sub = `${correct} z ${total} otázek správně. Procvičte více.`; }
+  else { msg = '💪 Pokračujte!'; sub = `${correct} z ${total} otázek správně. Projděte text znovu.`; }
 
   document.getElementById('score-msg').textContent = msg;
   document.getElementById('score-sub').textContent = sub;
-
-  // Review list
-  const list = document.getElementById('review-list');
-  list.innerHTML = '';
-  const letters = ['A', 'B', 'C', 'D'];
-
-  state.questions.forEach((q, i) => {
-    const ans = state.answers[i];
-    if (!ans) return;
-    const div = document.createElement('div');
-    div.className = 'review-item ' + (ans.correct ? 'correct-item' : 'wrong-item');
-
-    let answerText = '';
-    if (q.type === 'multiple_choice') {
-      const correctOpt = q.options?.[q.correct] || '';
-      if (ans.correct) {
-        answerText = `✓ ${letters[ans.correctIdx]}: ${correctOpt}`;
-      } else {
-        const chosenOpt = q.options?.[ans.chosen] || '?';
-        answerText = `✗ Vaše: ${letters[ans.chosen]}: ${chosenOpt} → Správně: ${letters[ans.correctIdx]}: ${correctOpt}`;
-      }
-    } else {
-      answerText = ans.correct ? `✓ Správně (vlastní hodnocení)` : `✗ Špatně → Vzor: ${q.answer}`;
-    }
-
-    div.innerHTML = `<div class="review-q">${i + 1}. ${q.question}</div><div class="review-a">${answerText}</div>`;
-    list.appendChild(div);
-  });
-
-  // Clear saved quiz data (finished)
-  Store.remove('savedQuiz');
-}
-
-// ============================================================
-// GENERATE QUIZ
-// ============================================================
-async function generateQuiz() {
-  if (!state.text) { showToast('Nejprve nahrajte soubor', 'err'); return; }
-
-  showScreen('screen-generating');
-  const genStatus = document.getElementById('gen-status');
-  genStatus.textContent = 'Analyzuji text…';
-
-  // Rotating status messages
-  const msgs = ['Analyzuji text…', 'Tvořím otázky…', 'Generuji odpovědi…', 'Dokončuji kvíz…'];
-  let msgI = 0;
-  const msgTimer = setInterval(() => {
-    msgI = (msgI + 1) % msgs.length;
-    genStatus.textContent = msgs[msgI];
-  }, 3500);
-
-  try {
-    const questions = await API.generateQuestions(state.text, state.difficulty);
-    clearInterval(msgTimer);
-
-    state.questions = questions;
-    state.currentQ = 0;
-    state.answers = [];
-    state.answeredCurrent = false;
-
-    // Save to localStorage for offline
-    Store.set('savedQuiz', {
-      questions,
-      difficulty: state.difficulty,
-      fileName: state.fileName,
-      savedAt: Date.now()
-    });
-
-    showScreen('screen-quiz');
-    renderQuestion();
-  } catch (err) {
-    clearInterval(msgTimer);
-    showToast(err.message, 'err');
-    showScreen('screen-upload');
-  }
-}
-
-// ============================================================
-// UPLOAD SCREEN
-// ============================================================
-function showUploadScreen() {
-  showScreen('screen-upload');
-
-  // Check for saved quiz
-  const saved = Store.get('savedQuiz');
-  const banner = document.getElementById('saved-banner');
-  if (saved && saved.questions && saved.questions.length > 0) {
-    const date = new Date(saved.savedAt);
-    const dateStr = date.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
-    document.getElementById('saved-banner-sub').textContent =
-      `${saved.fileName || 'Uložený kvíz'} · ${dateStr}`;
-    banner.classList.remove('hidden');
-  } else {
-    banner.classList.add('hidden');
-  }
-}
-
-function resumeSavedQuiz() {
-  const saved = Store.get('savedQuiz');
-  if (!saved) return;
-  state.questions = saved.questions;
-  state.difficulty = saved.difficulty;
-  state.fileName = saved.fileName;
-  state.currentQ = 0;
-  state.answers = [];
-  state.answeredCurrent = false;
-  showScreen('screen-quiz');
-  renderQuestion();
-}
-
-function setFile(file) {
-  if (!file) return;
-  const ext = file.name.split('.').pop().toLowerCase();
-  document.getElementById('file-icon').textContent = getFileIcon(ext);
-  document.getElementById('file-name').textContent = file.name;
-  document.getElementById('file-size').textContent = formatFileSize(file.size);
-  document.getElementById('file-selected').classList.remove('hidden');
-  document.getElementById('upload-zone').style.display = 'none';
-
-  // Parse the file
-  FileParser.parse(file).then(text => {
-    state.text = text;
-    state.fileName = file.name;
-    document.getElementById('btn-generate').disabled = false;
-    showToast(`Soubor načten (${Math.round(text.length / 1000)}k znaků)`, 'ok');
-  }).catch(err => {
-    showToast(err.message, 'err');
-    removeFile();
-  });
-}
-
-function removeFile() {
-  state.text = '';
-  state.fileName = '';
-  document.getElementById('file-selected').classList.add('hidden');
-  document.getElementById('upload-zone').style.display = '';
-  document.getElementById('btn-generate').disabled = true;
-  document.getElementById('file-input').value = '';
 }
 
 // ============================================================
 // INIT
 // ============================================================
 function init() {
-  // Register service worker
+  // Unregister any old service worker
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      regs.forEach(r => r.unregister());
+    });
   }
 
-  // Generate touch icon from canvas for iOS
-  try {
-    const c = document.createElement('canvas');
-    c.width = c.height = 192;
-    const ctx = c.getContext('2d');
-    ctx.fillStyle = '#2563eb';
-    ctx.beginPath();
-    ctx.roundRect(0, 0, 192, 192, 40);
-    ctx.fill();
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 110px -apple-system, Arial, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('?', 96, 100);
-    document.getElementById('apple-icon').href = c.toDataURL('image/png');
-  } catch {}
-
-  showUploadScreen();
-
-  // ---- EVENT LISTENERS ----
+  showScreen('screen-upload');
 
   // Upload zone
   const zone = document.getElementById('upload-zone');
   const fileInput = document.getElementById('file-input');
-
   zone.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', () => { if (fileInput.files[0]) setFile(fileInput.files[0]); });
-
   zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
   zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
   zone.addEventListener('drop', e => {
@@ -1166,59 +1390,86 @@ function init() {
     const file = e.dataTransfer.files[0];
     if (file) setFile(file);
   });
-
   document.getElementById('btn-remove-file').addEventListener('click', removeFile);
 
-  // Difficulty buttons
-  document.querySelectorAll('.diff-btn').forEach(btn => {
+  // Analyze button
+  document.getElementById('btn-analyze').addEventListener('click', analyzeText);
+
+  // Topics screen
+  document.getElementById('btn-select-all').addEventListener('click', () => {
+    state.selectedTopics = [...state.topics];
+    document.querySelectorAll('.topic-item').forEach(el => el.classList.add('selected'));
+    updateStartButton();
+  });
+  document.getElementById('btn-back-upload').addEventListener('click', () => showScreen('screen-upload'));
+
+  // Topics difficulty buttons
+  document.querySelectorAll('#topics-diff-grid .diff-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('#topics-diff-grid .diff-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       state.difficulty = btn.dataset.diff;
     });
   });
 
-  // Generate button
-  document.getElementById('btn-generate').addEventListener('click', generateQuiz);
+  document.getElementById('btn-start').addEventListener('click', startSession);
 
-  // Saved quiz resume
-  document.getElementById('btn-resume').addEventListener('click', resumeSavedQuiz);
+  // Quiz: True/False
+  document.getElementById('btn-true').addEventListener('click', () => {
+    if (!state.currentQuestion || state.answeredCurrent) return;
+    answerTF(true, state.currentQuestion);
+  });
+  document.getElementById('btn-false').addEventListener('click', () => {
+    if (!state.currentQuestion || state.answeredCurrent) return;
+    answerTF(false, state.currentQuestion);
+  });
 
-  // Quiz controls
-  document.getElementById('btn-check-open').addEventListener('click', checkOpenAnswer);
-  document.getElementById('btn-self-yes').addEventListener('click', () => selfEval(true));
-  document.getElementById('btn-self-no').addEventListener('click', () => selfEval(false));
+  // Quiz: Open
+  document.getElementById('btn-check-open').addEventListener('click', () => {
+    if (!state.currentQuestion || state.answeredCurrent) return;
+    checkOpenAnswer(state.currentQuestion);
+  });
+
+  // Quiz: Explain
+  document.getElementById('btn-check-explain').addEventListener('click', () => {
+    if (!state.currentQuestion || state.answeredCurrent) return;
+    checkExplainAnswer(state.currentQuestion);
+  });
+
+  // Quiz: Next
   document.getElementById('btn-next').addEventListener('click', () => {
+    if (state._retryLoad) {
+      loadNextQuestion();
+      return;
+    }
     if (!state.answeredCurrent) {
       showToast('Nejprve odpovězte na otázku', 'err');
       return;
     }
-    nextQuestion();
-  });
-  document.getElementById('btn-quit-quiz').addEventListener('click', () => {
-    if (confirm('Opravdu chcete ukončit kvíz?')) {
-      showUploadScreen();
-    }
+    loadNextQuestion();
   });
 
-  // Results controls
-  document.getElementById('btn-retry').addEventListener('click', () => {
-    state.currentQ = 0;
-    state.answers = [];
-    state.answeredCurrent = false;
-    showScreen('screen-quiz');
-    renderQuestion();
+  // Quiz: End session
+  document.getElementById('btn-end-session').addEventListener('click', () => {
+    if (confirm('Opravdu chcete ukončit sezení?')) endSession();
   });
-  document.getElementById('btn-new-quiz').addEventListener('click', () => {
-    state.questions = null;
+
+  // Results
+  document.getElementById('btn-continue').addEventListener('click', () => {
+    state.sessionActive = true;
+    showScreen('screen-quiz');
+    loadNextQuestion();
+  });
+  document.getElementById('btn-new-session').addEventListener('click', () => {
     state.text = '';
     state.fileName = '';
+    state.topics = [];
+    state.selectedTopics = [];
     removeFile();
-    showUploadScreen();
+    showScreen('screen-upload');
   });
 }
 
-// Start the app
 document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
