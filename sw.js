@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kviz-pruvodce-v1';
+const CACHE_NAME = 'kviz-pruvodce-v2';
 const CACHE_URLS = ['./', './index.html', './manifest.json', './icon.svg'];
 
 self.addEventListener('install', e => {
@@ -26,7 +26,7 @@ self.addEventListener('fetch', e => {
     caches.match(e.request).then(r => {
       if (r) return r;
       return fetch(e.request).then(res => {
-        if (res && res.ok && res.type === 'basic') {
+        if (res && res.ok && (res.type === 'basic' || res.type === 'cors')) {
           const clone = res.clone();
           caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
         }

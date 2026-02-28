@@ -10,6 +10,29 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Kvíz">
   <link rel="apple-touch-icon" id="apple-icon" href="icon.svg">
+  <script>
+    // PDF.js lazy loader – zavolá se jen při nahrání PDF souboru
+    window._pdfJsReady = null;
+    window.loadPdfJs = function() {
+      if (window._pdfJsReady) return window._pdfJsReady;
+      window._pdfJsReady = new Promise((resolve, reject) => {
+        if (window.pdfjsLib) { resolve(); return; }
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+        s.crossOrigin = 'anonymous';
+        s.onload = () => {
+          pdfjsLib.GlobalWorkerOptions.workerSrc =
+            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+          resolve();
+        };
+        s.onerror = () => reject(new Error(
+          'Nepodařilo se načíst PDF.js. Zkontrolujte internetové připojení a zkuste znovu.'
+        ));
+        document.head.appendChild(s);
+      });
+      return window._pdfJsReady;
+    };
+  </script>
   <style>
     :root {
       --primary: #2563eb;
@@ -431,7 +454,7 @@
         <div class="upload-formats">
           <span class="format-badge">TXT</span>
           <span class="format-badge">DOCX</span>
-          <span class="format-badge">PDF*</span>
+          <span class="format-badge">PDF</span>
         </div>
       </div>
       <div id="file-selected" class="file-selected hidden">
@@ -442,9 +465,6 @@
         </div>
         <button class="file-remove" id="btn-remove-file" title="Odebrat soubor">✕</button>
       </div>
-      <p style="font-size: 0.72rem; color: var(--text-light); margin-top: 8px;">
-        * PDF: funguje pro textové PDFy, naskenované dokumenty nejsou podporovány
-      </p>
     </div>
 
     <div class="card">
@@ -701,49 +721,44 @@ const FileParser = {
   },
 
   async parsePDF(file) {
+    // Lazy-load PDF.js from CDN (cached by SW after first use)
+    await window.loadPdfJs();
+
     const buffer = await file.arrayBuffer();
-    const bytes = new Uint8Array(buffer);
-    // Check signature
-    if (bytes[0] !== 0x25 || bytes[1] !== 0x50 || bytes[2] !== 0x44 || bytes[3] !== 0x46) {
-      throw new Error('Neplatný PDF soubor.');
+    let pdf;
+    try {
+      pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+    } catch (e) {
+      throw new Error('Nepodařilo se otevřít PDF: ' + (e.message || 'neznámá chyba'));
     }
-    const latin = new TextDecoder('latin1').decode(buffer);
-    let out = '';
 
-    // Extract BT/ET text blocks
-    const btEt = /BT\b([\s\S]*?)\bET/g;
-    let m;
-    while ((m = btEt.exec(latin)) !== null) {
-      const block = m[1];
-      // (text) Tj
-      const tj = /\(([^)\\]*(?:\\.[^)\\]*)*)\)\s*Tj/g;
-      let t;
-      while ((t = tj.exec(block)) !== null) out += this.decodePDFStr(t[1]) + ' ';
-      // [(text) offset ...] TJ
-      const tjArr = /\[([^\]]*)\]\s*TJ/g;
-      let ta;
-      while ((ta = tjArr.exec(block)) !== null) {
-        const strRe = /\(([^)\\]*(?:\\.[^)\\]*)*)\)/g;
-        let s;
-        while ((s = strRe.exec(ta[1])) !== null) out += this.decodePDFStr(s[1]);
+    let fullText = '';
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      const page = await pdf.getPage(pageNum);
+      const content = await page.getTextContent();
+      // Join items; insert space when items don't end/start with whitespace
+      let pageText = '';
+      for (let i = 0; i < content.items.length; i++) {
+        const item = content.items[i];
+        if (!item.str) continue;
+        pageText += item.str;
+        // Add space between words if needed
+        const next = content.items[i + 1];
+        if (next && item.str.slice(-1) !== ' ' && next.str[0] !== ' ') {
+          pageText += ' ';
+        }
       }
-      out += '\n';
+      fullText += pageText.trim() + '\n';
     }
 
-    out = out.replace(/[ \t]{2,}/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+    fullText = fullText.replace(/[ \t]{2,}/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
 
-    if (out.length < 80) {
+    if (fullText.length < 50) {
       throw new Error(
-        'Z PDF se nepodařilo extrahovat dostatek textu.\n' +
-        'Naskenované PDFy nejsou podporovány. Zkuste soubor DOCX nebo TXT.'
+        'PDF neobsahuje extrahovatelný text. Soubor je pravděpodobně naskenovaný obrázek nebo chráněný heslem.'
       );
     }
-    return out;
-  },
-
-  decodePDFStr(s) {
-    return s.replace(/\\n/g,'\n').replace(/\\r/g,'\r').replace(/\\t/g,'\t')
-            .replace(/\\\\/g,'\\').replace(/\\\(/g,'(').replace(/\\\)/g,')');
+    return fullText;
   }
 };
 
