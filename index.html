@@ -688,8 +688,12 @@ const state = {
   currentQuestion: null,
   answeredCurrent: false,
   currentTopicIdx: 0,
-  sessionActive: false
+  sessionActive: false,
+  prefetchQueue: []       // questions pre-fetched in background
 };
+
+// Promise for the in-flight background fetch (null when idle)
+let prefetchPromise = null;
 
 // ============================================================
 // FILE PARSER
@@ -999,6 +1003,8 @@ function startSession() {
   state.currentTopicIdx = 0;
   state.answeredCurrent = false;
   state.sessionActive = true;
+  state.prefetchQueue = [];
+  prefetchPromise = null;
 
   updateStats();
   showScreen('screen-quiz');
@@ -1012,12 +1018,9 @@ function updateStats() {
 }
 
 async function loadNextQuestion() {
-  // Show loading
-  document.getElementById('q-loading').style.display = 'flex';
-  document.getElementById('q-content').style.display = 'none';
   document.getElementById('btn-next').style.display = 'none';
 
-  // 1. Check retry queue
+  // 1. Retry queue (already due)
   const retryIdx = state.retryQueue.findIndex(item => item.delay <= 0);
   if (retryIdx >= 0) {
     const item = state.retryQueue.splice(retryIdx, 1)[0];
@@ -1025,7 +1028,7 @@ async function loadNextQuestion() {
     return;
   }
 
-  // 2. Check review queue
+  // 2. Review queue (spaced repetition)
   const reviewIdx = state.reviewQueue.findIndex(item => item.dueAt <= state.questionsAnswered);
   if (reviewIdx >= 0) {
     const item = state.reviewQueue.splice(reviewIdx, 1)[0];
@@ -1033,33 +1036,84 @@ async function loadNextQuestion() {
     return;
   }
 
-  // 3. Generate new question
+  // 3. Use pre-fetched question (instant – no loading screen)
+  if (state.prefetchQueue.length > 0) {
+    renderQuestion(state.prefetchQueue.shift(), 'new');
+    return;
+  }
+
+  // 4. Wait for in-flight background fetch (shows loading only if it wasn't ready in time)
+  if (prefetchPromise !== null) {
+    showQuizLoading();
+    await prefetchPromise;
+    if (state.prefetchQueue.length > 0) {
+      renderQuestion(state.prefetchQueue.shift(), 'new');
+      return;
+    }
+  }
+
+  // 5. Nothing pre-fetched — fetch now (first question of session or after prefetch error)
+  showQuizLoading();
   const topic = state.selectedTopics[state.currentTopicIdx % state.selectedTopics.length];
   const qType = pickQuestionType();
+  state.currentTopicIdx++;
 
   try {
     const question = await API.generateQuestion(
-      state.text,
-      topic.name,
-      qType,
-      state.askedQuestions,
-      state.difficulty
+      state.text, topic.name, qType, state.askedQuestions, state.difficulty
     );
     question._topicName = topic.name;
-    state.currentTopicIdx++;
     renderQuestion(question, 'new');
   } catch (err) {
+    state.currentTopicIdx--;
     document.getElementById('q-loading').style.display = 'none';
     document.getElementById('q-content').style.display = 'block';
     document.getElementById('q-text').textContent = '';
     showToast(err.message + ' — zkuste znovu.', 'err');
-    // Show retry button
     document.getElementById('btn-next').textContent = '🔄 Zkusit znovu';
     document.getElementById('btn-next').style.display = 'block';
     document.getElementById('btn-next').disabled = false;
-    state.answeredCurrent = true; // allow clicking next to retry
+    state.answeredCurrent = true;
     state._retryLoad = true;
   }
+}
+
+function showQuizLoading() {
+  document.getElementById('q-loading').style.display = 'flex';
+  document.getElementById('q-content').style.display = 'none';
+}
+
+// Start a background fetch for the next NEW question if one isn't already queued/in-flight
+// and the next question won't come from the retry/review queues.
+function maybePrefetch() {
+  if (!state.sessionActive) return;
+  if (prefetchPromise !== null || state.prefetchQueue.length > 0) return;
+
+  // Next question will come from retry queue — no API call needed
+  if (state.retryQueue.some(i => i.delay <= 1)) return;
+  // Next question will come from review queue — no API call needed
+  if (state.reviewQueue.some(i => i.dueAt <= state.questionsAnswered + 1)) return;
+
+  const topicIdx = state.currentTopicIdx;
+  const topic = state.selectedTopics[topicIdx % state.selectedTopics.length];
+  const qType = pickQuestionType();
+  state.currentTopicIdx++;
+
+  const askedSnapshot = state.askedQuestions.slice(-20);
+
+  prefetchPromise = API.generateQuestion(
+    state.text, topic.name, qType, askedSnapshot, state.difficulty
+  )
+    .then(question => {
+      question._topicName = topic.name;
+      state.prefetchQueue.push(question);
+    })
+    .catch(() => {
+      state.currentTopicIdx = topicIdx; // release the claimed slot on error
+    })
+    .finally(() => {
+      prefetchPromise = null;
+    });
 }
 
 function renderQuestion(question, mode) {
@@ -1118,6 +1172,9 @@ function renderQuestion(question, mode) {
   else if (question.type === 'true_false') renderTF(question);
   else if (question.type === 'open') renderOpen(question);
   else if (question.type === 'explain') renderExplain(question);
+
+  // Start fetching the next question in the background while the user reads/answers this one
+  maybePrefetch();
 }
 
 function renderMC(q) {
