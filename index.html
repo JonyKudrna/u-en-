@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Kvízový Průvodce</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Kvíz">
+  <link rel="apple-touch-icon" id="apple-icon" href="icon.svg">
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #eff6ff;
+      --primary-border: #bfdbfe;
+      --success: #16a34a;
+      --success-light: #dcfce7;
+      --error: #dc2626;
+      --error-light: #fee2e2;
+      --warning: #d97706;
+      --warning-light: #fef3c7;
+      --surface: #ffffff;
+      --background: #f1f5f9;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
+      --radius: 14px;
+      --radius-sm: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05);
+      --shadow-lg: 0 10px 25px rgba(0,0,0,0.12);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: var(--background);
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100%;
+    }
+    #app {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 16px 40px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    /* Screens */
+    .screen { flex: 1; display: flex; flex-direction: column; animation: fadeIn 0.25s ease; }
+    .screen.hidden { display: none !important; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    /* Header */
+    .app-header { padding: 32px 0 20px; text-align: center; }
+    .app-logo {
+      width: 76px; height: 76px;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      border-radius: 22px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 2.2rem; color: white; font-weight: 900;
+      box-shadow: 0 6px 20px rgba(37,99,235,0.35);
+    }
+    .app-title { font-size: 1.6rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .app-subtitle { font-size: 0.9rem; color: var(--text-muted); }
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+    .card-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+    /* Buttons */
+    .btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 15px 20px;
+      border-radius: var(--radius);
+      font-size: 1rem; font-weight: 600;
+      border: none; cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+    .btn-secondary { background: var(--surface); color: var(--primary); border: 2px solid var(--primary-border); }
+    .btn-success { background: var(--success); color: white; }
+    .btn-error { background: var(--error); color: white; }
+    .btn-ghost { background: transparent; color: var(--text-muted); border: 1.5px solid var(--border); }
+    .btn-sm { padding: 10px 16px; font-size: 0.875rem; }
+    .btn-row { display: flex; gap: 10px; }
+    .btn-row .btn { flex: 1; }
+    /* Form */
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 0.875rem; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+    .form-input {
+      width: 100%; padding: 13px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 1rem; color: var(--text);
+      background: var(--surface);
+      transition: border-color 0.2s;
+      outline: none; font-family: inherit;
+    }
+    .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    .form-hint { font-size: 0.75rem; color: var(--text-light); margin-top: 5px; }
+    /* Upload zone */
+    .upload-zone {
+      border: 2.5px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 36px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--background);
+      position: relative;
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+    .upload-zone input[type="file"] { display: none; }
+    .upload-icon { font-size: 2.8rem; margin-bottom: 12px; display: block; }
+    .upload-zone h3 { font-size: 1rem; font-weight: 600; margin-bottom: 6px; }
+    .upload-zone p { font-size: 0.85rem; color: var(--text-muted); }
+    .upload-formats {
+      display: flex; gap: 6px; justify-content: center;
+      flex-wrap: wrap; margin-top: 14px;
+    }
+    .format-badge {
+      padding: 3px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    .file-selected {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px;
+      background: var(--primary-light);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--primary-border);
+      margin-top: 12px;
+    }
+    .file-icon { font-size: 1.5rem; flex-shrink: 0; }
+    .file-info { flex: 1; min-width: 0; }
+    .file-name { font-weight: 600; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-size { font-size: 0.75rem; color: var(--text-muted); }
+    .file-remove { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1.2rem; padding: 4px; }
+    /* Difficulty */
+    .difficulty-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .diff-btn {
+      padding: 14px 8px;
+      border-radius: var(--radius-sm);
+      border: 2px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .diff-btn.active { border-color: var(--primary); background: var(--primary-light); }
+    .diff-btn .diff-icon { font-size: 1.6rem; display: block; margin-bottom: 4px; }
+    .diff-btn .diff-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); }
+    .diff-btn.active .diff-label { color: var(--primary); }
+    /* Saved quiz banner */
+    .saved-banner {
+      background: linear-gradient(135deg, #fef3c7, #fffbeb);
+      border: 1.5px solid #fbbf24;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .saved-banner-icon { font-size: 1.5rem; flex-shrink: 0; }
+    .saved-banner-text { flex: 1; }
+    .saved-banner-title { font-weight: 600; font-size: 0.9rem; color: #92400e; }
+    .saved-banner-sub { font-size: 0.78rem; color: #b45309; }
+    .saved-banner-btn {
+      background: #f59e0b; color: white;
+      border: none; border-radius: var(--radius-sm);
+      padding: 8px 14px; font-size: 0.8rem; font-weight: 600;
+      cursor: pointer; font-family: inherit; white-space: nowrap;
+    }
+    /* Loading screen */
+    .loading-screen {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 40px 20px; text-align: center;
+    }
+    .spinner {
+      width: 52px; height: 52px;
+      border: 4px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 24px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; }
+    .loading-sub { font-size: 0.875rem; color: var(--text-muted); }
+    /* Progress bar */
+    .progress-wrapper { padding: 20px 0 8px; }
+    .progress-info { display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--text-muted); margin-bottom: 8px; }
+    .progress-bar { height: 5px; background: var(--border); border-radius: 99px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--primary); border-radius: 99px; transition: width 0.4s ease; }
+    /* Quiz */
+    .q-type-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 12px; border-radius: 99px;
+      font-size: 0.75rem; font-weight: 600;
+      margin-bottom: 14px;
+    }
+    .badge-mc { background: #ede9fe; color: #6d28d9; }
+    .badge-open { background: #fce7f3; color: #be185d; }
+    .q-text { font-size: 1.05rem; font-weight: 500; color: var(--text); line-height: 1.65; margin-bottom: 22px; }
+    /* MC Options */
+    .options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+    .option-btn {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer; text-align: left; width: 100%;
+      transition: all 0.15s; font-family: inherit;
+      font-size: 0.95rem; color: var(--text);
+    }
+    .option-btn:hover:not(:disabled) { border-color: var(--primary); background: var(--primary-light); }
+    .option-btn.correct { border-color: var(--success) !important; background: var(--success-light) !important; color: var(--success) !important; }
+    .option-btn.wrong { border-color: var(--error) !important; background: var(--error-light) !important; color: var(--error) !important; }
+    .option-btn:disabled { cursor: default; }
+    .option-letter {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: var(--background);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.82rem;
+      flex-shrink: 0;
+      border: 1.5px solid var(--border);
+      color: var(--text-muted);
+    }
+    .option-btn.correct .option-letter { border-color: var(--success); color: var(--success); background: white; }
+    .option-btn.wrong .option-letter { border-color: var(--error); color: var(--error); background: white; }
+    .explanation {
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+      background: #f0fdf4;
+      border-left: 4px solid var(--success);
+      font-size: 0.875rem;
+      color: #166534;
+      margin-bottom: 16px;
+      display: none;
+      line-height: 1.6;
+    }
+    .explanation.wrong-exp { background: #fff1f2; border-color: var(--error); color: #991b1b; }
+    .explanation.show { display: block; }
+    /* Open question */
+    .answer-textarea {
+      width: 100%; min-height: 110px;
+      padding: 12px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 0.95rem; color: var(--text);
+      resize: vertical; font-family: inherit;
+      line-height: 1.5; outline: none;
+      background: var(--surface);
+      transition: border-color 0.2s;
+      margin-bottom: 12px;
+    }
+    .answer-textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    .model-answer {
+      padding: 14px 16px;
+      background: var(--primary-light);
+      border-radius: var(--radius-sm);
+      border-left: 4px solid var(--primary);
+      margin-bottom: 12px;
+      display: none;
+    }
+    .model-answer.show { display: block; }
+    .model-answer-label { font-size: 0.72rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+    .model-answer-text { font-size: 0.875rem; color: var(--text); line-height: 1.6; }
+    .keywords-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .keyword {
+      padding: 2px 8px;
+      background: white;
+      border: 1px solid var(--primary-border);
+      border-radius: 99px;
+      font-size: 0.72rem;
+      color: var(--primary);
+      font-weight: 500;
+    }
+    .keyword.matched { background: #dcfce7; border-color: #86efac; color: var(--success); }
+    .self-eval { display: none; gap: 10px; margin-bottom: 14px; }
+    .self-eval.show { display: flex; }
+    .self-eval-label { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 500; }
+    /* Results */
+    .score-wrap { text-align: center; padding: 24px 0 20px; }
+    .score-ring {
+      width: 140px; height: 140px;
+      position: relative;
+      display: inline-flex; align-items: center; justify-content: center;
+      margin-bottom: 16px;
+    }
+    .score-ring svg { position: absolute; top: 0; left: 0; transform: rotate(-90deg); }
+    .score-inner { position: relative; z-index: 1; text-align: center; }
+    .score-num { font-size: 2.2rem; font-weight: 800; color: var(--text); line-height: 1; }
+    .score-den { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; }
+    .score-pct { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+    .score-msg { font-size: 1.1rem; font-weight: 600; color: var(--text); }
+    .score-sub { font-size: 0.875rem; color: var(--text-muted); margin-top: 4px; }
+    .review-section { margin-bottom: 14px; }
+    .review-title { font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 10px; }
+    .review-item {
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      border-left: 3.5px solid var(--border);
+      margin-bottom: 8px;
+      font-size: 0.86rem;
+    }
+    .review-item.correct-item { border-color: var(--success); }
+    .review-item.wrong-item { border-color: var(--error); }
+    .review-q { font-weight: 500; color: var(--text); margin-bottom: 4px; line-height: 1.4; }
+    .review-a { color: var(--text-muted); font-size: 0.8rem; }
+    .review-a strong { color: var(--success); }
+    .review-a .wrong-ans { color: var(--error); text-decoration: line-through; margin-right: 4px; }
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #1e293b; color: white;
+      padding: 12px 20px; border-radius: var(--radius);
+      font-size: 0.875rem; font-weight: 500;
+      z-index: 9999; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      max-width: calc(100vw - 40px); text-align: center;
+      box-shadow: var(--shadow-lg); pointer-events: none;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+    #toast.err { background: var(--error); }
+    #toast.ok { background: var(--success); }
+    /* Misc */
+    .section-gap { height: 8px; }
+    .text-center { text-align: center; }
+    .text-muted { color: var(--text-muted); font-size: 0.875rem; }
+    .mt-8 { margin-top: 8px; }
+    .mt-16 { margin-top: 16px; }
+    /* iOS safe area */
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+      #app { padding-bottom: calc(40px + env(safe-area-inset-bottom)); }
+    }
+  </style>
+</head>
+<body>
+<div id="toast"></div>
+<div id="app">
+
+  <!-- ===== SCREEN: SETUP ===== -->
+  <div id="screen-setup" class="screen">
+    <div class="app-header">
+      <div class="app-logo">?</div>
+      <h1 class="app-title">Kvízový Průvodce</h1>
+      <p class="app-subtitle">Učte se z vlastních textů pomocí AI</p>
+    </div>
+    <div class="card">
+      <div class="card-title">🔑 Nastavení API klíče</div>
+      <div class="form-group">
+        <label class="form-label">Claude API klíč</label>
+        <input type="password" id="api-key-input" class="form-input"
+          placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false">
+        <p class="form-hint">
+          Klíč je uložen pouze ve vašem prohlížeči a nikam se neodesílá.<br>
+          Získejte klíč na <strong>console.anthropic.com</strong>
+        </p>
+      </div>
+      <button class="btn btn-primary" id="btn-save-key">
+        <span>Uložit a pokračovat</span> →
+      </button>
+    </div>
+    <div class="card" style="background: var(--primary-light); border-color: var(--primary-border);">
+      <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.6;">
+        <strong>ℹ️ Jak to funguje:</strong><br>
+        Nahrajte libovolný dokument, zvolte obtížnost a aplikace pomocí AI vygeneruje výukový kvíz.
+        Kvíz se uloží do telefonu a funguje i offline.
+      </p>
+    </div>
+  </div>
+
+  <!-- ===== SCREEN: UPLOAD ===== -->
+  <div id="screen-upload" class="screen hidden">
+    <div class="app-header">
+      <div class="app-logo">📚</div>
+      <h1 class="app-title">Nový kvíz</h1>
+      <p class="app-subtitle">Nahrajte text a zvolte obtížnost</p>
+    </div>
+
+    <div id="saved-banner" class="saved-banner hidden">
+      <div class="saved-banner-icon">💾</div>
+      <div class="saved-banner-text">
+        <div class="saved-banner-title">Uložený kvíz</div>
+        <div class="saved-banner-sub" id="saved-banner-sub">Pokračovat v předchozím kvízu?</div>
+      </div>
+      <button class="saved-banner-btn" id="btn-resume">Pokračovat</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📄 Dokument</div>
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" id="file-input" accept=".txt,.docx,.pdf">
+        <span class="upload-icon">⬆️</span>
+        <h3>Klepněte pro výběr souboru</h3>
+        <p>nebo přetáhněte soubor sem</p>
+        <div class="upload-formats">
+          <span class="format-badge">TXT</span>
+          <span class="format-badge">DOCX</span>
+          <span class="format-badge">PDF*</span>
+        </div>
+      </div>
+      <div id="file-selected" class="file-selected hidden">
+        <span class="file-icon" id="file-icon">📄</span>
+        <div class="file-info">
+          <div class="file-name" id="file-name"></div>
+          <div class="file-size" id="file-size"></div>
+        </div>
+        <button class="file-remove" id="btn-remove-file" title="Odebrat soubor">✕</button>
+      </div>
+      <p style="font-size: 0.72rem; color: var(--text-light); margin-top: 8px;">
+        * PDF: funguje pro textové PDFy, naskenované dokumenty nejsou podporovány
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚙️ Obtížnost</div>
+      <div class="difficulty-grid">
+        <button class="diff-btn" data-diff="easy">
+          <span class="diff-icon">🟢</span>
+          <span class="diff-label">Lehká</span>
+        </button>
+        <button class="diff-btn active" data-diff="medium">
+          <span class="diff-icon">🟡</span>
+          <span class="diff-label">Střední</span>
+        </button>
+        <button class="diff-btn" data-diff="hard">
+          <span class="diff-icon">🔴</span>
+          <span class="diff-label">Těžká</span>
+        </button>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="btn-generate" disabled>
+      🤖 Generovat kvíz
+    </button>
+
+    <div class="section-gap"></div>
+    <button class="btn btn-ghost btn-sm" id="btn-change-key" style="margin-top: 8px;">
+      🔑 Změnit API klíč
+    </button>
+  </div>
+
+  <!-- ===== SCREEN: GENERATING ===== -->
+  <div id="screen-generating" class="screen hidden">
+    <div class="loading-screen">
+      <div class="spinner"></div>
+      <div class="loading-title">Generuji kvíz...</div>
+      <div class="loading-sub" id="gen-status">Analyzuji text a tvořím otázky</div>
+      <p class="text-muted mt-16" style="font-size: 0.8rem;">Může to trvat 10–20 vteřin</p>
+    </div>
+  </div>
+
+  <!-- ===== SCREEN: QUIZ ===== -->
+  <div id="screen-quiz" class="screen hidden">
+    <div class="progress-wrapper">
+      <div class="progress-info">
+        <span id="q-counter">Otázka 1 / 10</span>
+        <span id="q-score-live">0 správně</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <div class="card" style="flex: 1; margin-bottom: 14px;">
+      <div id="q-type-badge" class="q-type-badge badge-mc">📝 Výběr z možností</div>
+      <div id="q-text" class="q-text"></div>
+
+      <!-- MC Options -->
+      <div id="mc-area">
+        <div class="options" id="options-list"></div>
+        <div id="explanation" class="explanation"></div>
+      </div>
+
+      <!-- Open Question -->
+      <div id="open-area" style="display:none;">
+        <textarea id="open-answer" class="answer-textarea" placeholder="Napište vaši odpověď..."></textarea>
+        <button class="btn btn-secondary btn-sm" id="btn-check-open" style="margin-bottom: 12px;">
+          🔍 Zkontrolovat odpověď
+        </button>
+        <div id="model-answer" class="model-answer">
+          <div class="model-answer-label">Vzorová odpověď</div>
+          <div class="model-answer-text" id="model-answer-text"></div>
+          <div class="keywords-row" id="keywords-row"></div>
+        </div>
+        <div class="self-eval-label" id="self-eval-label" style="display:none;">Odpověděli jste správně?</div>
+        <div class="self-eval" id="self-eval">
+          <button class="btn btn-success btn-sm" id="btn-self-yes">✓ Ano</button>
+          <button class="btn btn-error btn-sm" id="btn-self-no">✗ Ne</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="btn-next" disabled>
+      Další otázka →
+    </button>
+    <button class="btn btn-ghost btn-sm" id="btn-quit-quiz" style="margin-top: 10px;">
+      Ukončit kvíz
+    </button>
+  </div>
+
+  <!-- ===== SCREEN: RESULTS ===== -->
+  <div id="screen-results" class="screen hidden">
+    <div class="app-header" style="padding-top: 24px;">
+      <div class="score-wrap">
+        <div class="score-ring">
+          <svg width="140" height="140" viewBox="0 0 140 140">
+            <circle cx="70" cy="70" r="60" fill="none" stroke="#e2e8f0" stroke-width="10"/>
+            <circle cx="70" cy="70" r="60" fill="none"
+              stroke="#2563eb" stroke-width="10"
+              stroke-linecap="round"
+              stroke-dasharray="377" id="score-arc"
+              stroke-dashoffset="377"/>
+          </svg>
+          <div class="score-inner">
+            <div class="score-num" id="score-num">0</div>
+            <div class="score-den" id="score-den">/ 10</div>
+          </div>
+        </div>
+        <div class="score-msg" id="score-msg">Výsledky kvízu</div>
+        <div class="score-sub" id="score-sub"></div>
+      </div>
+    </div>
+
+    <div class="review-section" id="review-section">
+      <div class="review-title">Přehled odpovědí</div>
+      <div id="review-list"></div>
+    </div>
+
+    <div class="btn-row" style="margin-bottom: 10px;">
+      <button class="btn btn-secondary" id="btn-retry">🔄 Znovu</button>
+      <button class="btn btn-primary" id="btn-new-quiz">📄 Nový kvíz</button>
+    </div>
+    <button class="btn btn-ghost btn-sm" id="btn-change-key-results">🔑 Změnit API klíč</button>
+  </div>
+
+</div>
+
+<script>
+'use strict';
+
+// ============================================================
+// STORAGE
+// ============================================================
+const Store = {
+  get(key, def = null) {
+    try { const v = localStorage.getItem(key); return v !== null ? JSON.parse(v) : def; }
+    catch { return def; }
+  },
+  set(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} },
+  remove(key) { try { localStorage.removeItem(key); } catch {} }
+};
+
+// ============================================================
+// APP STATE
+// ============================================================
+const state = {
+  apiKey: Store.get('apiKey', ''),
+  questions: null,
+  currentQ: 0,
+  answers: [],        // { correct: bool, userAnswer: string, type: string }
+  difficulty: 'medium',
+  text: '',
+  fileName: '',
+  answeredCurrent: false
+};
+
+// ============================================================
+// FILE PARSER
+// ============================================================
+const FileParser = {
+  async parse(file) {
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (ext === 'txt') return this.parseTXT(file);
+    if (ext === 'docx') return this.parseDOCX(file);
+    if (ext === 'pdf') return this.parsePDF(file);
+    throw new Error(`Nepodporovaný formát: .${ext}. Použijte TXT, DOCX nebo PDF.`);
+  },
+
+  parseTXT(file) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = e => {
+        const text = e.target.result;
+        if (!text || text.trim().length < 50)
+          reject(new Error('Soubor je příliš krátký nebo prázdný.'));
+        else resolve(text);
+      };
+      r.onerror = () => reject(new Error('Nepodařilo se načíst soubor.'));
+      r.readAsText(file, 'UTF-8');
+    });
+  },
+
+  async parseDOCX(file) {
+    const buffer = await file.arrayBuffer();
+    const zip = await this.readZIP(buffer);
+    const xmlData = zip['word/document.xml'];
+    if (!xmlData) throw new Error('Neplatný DOCX soubor – chybí document.xml');
+    const xml = new TextDecoder('utf-8').decode(xmlData);
+    const text = this.extractWordText(xml);
+    if (text.trim().length < 50) throw new Error('DOCX soubor neobsahuje žádný čitelný text.');
+    return text;
+  },
+
+  async readZIP(buffer) {
+    const bytes = new Uint8Array(buffer);
+    const view = new DataView(buffer);
+    const files = {};
+    let offset = 0;
+    while (offset < bytes.length - 30) {
+      if (bytes[offset] === 0x50 && bytes[offset+1] === 0x4B) {
+        if (bytes[offset+2] === 0x03 && bytes[offset+3] === 0x04) {
+          const compression = view.getUint16(offset + 8, true);
+          const compSize = view.getUint32(offset + 18, true);
+          const fnLen = view.getUint16(offset + 26, true);
+          const extraLen = view.getUint16(offset + 28, true);
+          const fn = new TextDecoder().decode(bytes.slice(offset + 30, offset + 30 + fnLen));
+          const dataStart = offset + 30 + fnLen + extraLen;
+          const compData = bytes.slice(dataStart, dataStart + compSize);
+          if (fn === 'word/document.xml' || fn.endsWith('.xml')) {
+            try {
+              if (compression === 0) {
+                files[fn] = compData;
+              } else if (compression === 8) {
+                files[fn] = await this.inflateRaw(compData);
+              }
+            } catch { /* skip undecompressible files */ }
+          }
+          offset = dataStart + compSize;
+        } else if (bytes[offset+2] === 0x01 && bytes[offset+3] === 0x02) {
+          break; // Central directory header – stop
+        } else { offset++; }
+      } else { offset++; }
+    }
+    return files;
+  },
+
+  async inflateRaw(data) {
+    if (!('DecompressionStream' in self)) throw new Error('DecompressionStream not supported');
+    const ds = new DecompressionStream('deflate-raw');
+    const writer = ds.writable.getWriter();
+    writer.write(data);
+    writer.close();
+    const chunks = [];
+    const reader = ds.readable.getReader();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+    }
+    const total = chunks.reduce((s, c) => s + c.length, 0);
+    const out = new Uint8Array(total);
+    let pos = 0;
+    for (const c of chunks) { out.set(c, pos); pos += c.length; }
+    return out;
+  },
+
+  extractWordText(xml) {
+    return xml
+      .replace(/<w:br[^/]*/g, '\n')
+      .replace(/<w:p[ />]/g, '\n')
+      .replace(/<[^>]+>/g, '')
+      .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&#x[0-9A-Fa-f]+;/g, '')
+      .replace(/\n{3,}/g, '\n\n').trim();
+  },
+
+  async parsePDF(file) {
+    const buffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    // Check signature
+    if (bytes[0] !== 0x25 || bytes[1] !== 0x50 || bytes[2] !== 0x44 || bytes[3] !== 0x46) {
+      throw new Error('Neplatný PDF soubor.');
+    }
+    const latin = new TextDecoder('latin1').decode(buffer);
+    let out = '';
+
+    // Extract BT/ET text blocks
+    const btEt = /BT\b([\s\S]*?)\bET/g;
+    let m;
+    while ((m = btEt.exec(latin)) !== null) {
+      const block = m[1];
+      // (text) Tj
+      const tj = /\(([^)\\]*(?:\\.[^)\\]*)*)\)\s*Tj/g;
+      let t;
+      while ((t = tj.exec(block)) !== null) out += this.decodePDFStr(t[1]) + ' ';
+      // [(text) offset ...] TJ
+      const tjArr = /\[([^\]]*)\]\s*TJ/g;
+      let ta;
+      while ((ta = tjArr.exec(block)) !== null) {
+        const strRe = /\(([^)\\]*(?:\\.[^)\\]*)*)\)/g;
+        let s;
+        while ((s = strRe.exec(ta[1])) !== null) out += this.decodePDFStr(s[1]);
+      }
+      out += '\n';
+    }
+
+    out = out.replace(/[ \t]{2,}/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+
+    if (out.length < 80) {
+      throw new Error(
+        'Z PDF se nepodařilo extrahovat dostatek textu.\n' +
+        'Naskenované PDFy nejsou podporovány. Zkuste soubor DOCX nebo TXT.'
+      );
+    }
+    return out;
+  },
+
+  decodePDFStr(s) {
+    return s.replace(/\\n/g,'\n').replace(/\\r/g,'\r').replace(/\\t/g,'\t')
+            .replace(/\\\\/g,'\\').replace(/\\\(/g,'(').replace(/\\\)/g,')');
+  }
+};
+
+// ============================================================
+// CLAUDE API
+// ============================================================
+const API = {
+  async generateQuestions(text, difficulty, apiKey) {
+    const diffDescriptions = {
+      easy:   'Lehká – otázky na konkrétní fakta přímo zmíněná v textu. Odpovědi jsou zřejmé ze čtení.',
+      medium: 'Střední – otázky vyžadující porozumění, schopnost shrnout a propojit informace z textu.',
+      hard:   'Těžká – analytické otázky. Vyžadují hlubší porozumění, schopnost vyvodit závěry a kriticky zhodnotit.'
+    };
+
+    const trimmedText = text.slice(0, 8000);
+
+    const prompt = `Jsi zkušený pedagog. Z níže uvedeného textu vytvoř výukový kvíz v ČEŠTINĚ.
+
+Obtížnost: ${diffDescriptions[difficulty]}
+
+Vytvoř přesně 10 otázek:
+- Otázky 1–6: výběr ze čtyř možností (typ "multiple_choice")
+- Otázky 7–10: otevřená otázka na krátkou odpověď (typ "open")
+
+DŮLEŽITÉ PRAVIDLA:
+- Všechny otázky a odpovědi MUSÍ být v češtině
+- Otázky musí vycházet výhradně z obsahu textu
+- U multiple_choice: pole "correct" je INDEX (0=A, 1=B, 2=C, 3=D) správné odpovědi
+- Odpověz POUZE platným JSON objektem, bez jakéhokoliv dalšího textu nebo markdown formátování
+
+Formát:
+{
+  "questions": [
+    {
+      "id": 1,
+      "type": "multiple_choice",
+      "question": "Text otázky?",
+      "options": ["Možnost A", "Možnost B", "Možnost C", "Možnost D"],
+      "correct": 0,
+      "explanation": "Stručné vysvětlení proč je tato odpověď správná."
+    },
+    {
+      "id": 7,
+      "type": "open",
+      "question": "Text otevřené otázky?",
+      "answer": "Vzorová správná odpověď.",
+      "keywords": ["klíčové slovo 1", "klíčové slovo 2", "klíčové slovo 3"]
+    }
+  ]
+}
+
+TEXT K ANALÝZE:
+---
+${trimmedText}
+---`;
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-6',
+        max_tokens: 4096,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      const msg = err.error?.message || `HTTP ${resp.status}`;
+      if (resp.status === 401) throw new Error('Neplatný API klíč. Zkontrolujte klíč a zkuste znovu.');
+      if (resp.status === 429) throw new Error('Překročen limit požadavků. Chvíli počkejte a zkuste znovu.');
+      if (resp.status === 529) throw new Error('Služba je přetížena. Zkuste to za chvíli.');
+      throw new Error(`Chyba API: ${msg}`);
+    }
+
+    const data = await resp.json();
+    return this.parseResponse(data.content[0].text);
+  },
+
+  parseResponse(raw) {
+    let s = raw.trim();
+    // Strip markdown code blocks
+    s = s.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+    // Find JSON boundaries
+    const start = s.indexOf('{');
+    const end = s.lastIndexOf('}');
+    if (start === -1 || end === -1) throw new Error('Nepodařilo se zpracovat odpověď AI. Zkuste to znovu.');
+    s = s.slice(start, end + 1);
+    let parsed;
+    try { parsed = JSON.parse(s); }
+    catch { throw new Error('Chyba při zpracování otázek. Zkuste to znovu.'); }
+    if (!Array.isArray(parsed.questions) || parsed.questions.length === 0)
+      throw new Error('AI nevygenerovala žádné otázky. Zkuste jiný text.');
+    return parsed.questions;
+  }
+};
+
+// ============================================================
+// UI HELPERS
+// ============================================================
+let toastTimer;
+function showToast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show' + (type ? ' ' + type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, 4000);
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function getFileIcon(ext) {
+  return { pdf: '📕', docx: '📘', txt: '📄' }[ext] || '📄';
+}
+
+// ============================================================
+// QUIZ RENDERING
+// ============================================================
+function renderQuestion() {
+  const q = state.questions[state.currentQ];
+  const total = state.questions.length;
+  state.answeredCurrent = false;
+
+  // Progress
+  document.getElementById('q-counter').textContent = `Otázka ${state.currentQ + 1} / ${total}`;
+  const correct = state.answers.filter(a => a.correct).length;
+  document.getElementById('q-score-live').textContent = `${correct} správně`;
+  document.getElementById('progress-fill').style.width = `${(state.currentQ / total) * 100}%`;
+
+  // Question type badge
+  const badge = document.getElementById('q-type-badge');
+  if (q.type === 'multiple_choice') {
+    badge.className = 'q-type-badge badge-mc';
+    badge.textContent = '📝 Výběr z možností';
+  } else {
+    badge.className = 'q-type-badge badge-open';
+    badge.textContent = '✏️ Otevřená otázka';
+  }
+
+  // Question text
+  document.getElementById('q-text').textContent = q.question;
+
+  // Show/hide areas
+  const mcArea = document.getElementById('mc-area');
+  const openArea = document.getElementById('open-area');
+  const btnNext = document.getElementById('btn-next');
+
+  btnNext.disabled = true;
+  btnNext.textContent = state.currentQ < total - 1 ? 'Další otázka →' : 'Zobrazit výsledky';
+
+  if (q.type === 'multiple_choice') {
+    mcArea.style.display = 'block';
+    openArea.style.display = 'none';
+    renderMCOptions(q);
+    document.getElementById('explanation').className = 'explanation';
+    document.getElementById('explanation').textContent = '';
+  } else {
+    mcArea.style.display = 'none';
+    openArea.style.display = 'block';
+    document.getElementById('open-answer').value = '';
+    document.getElementById('open-answer').disabled = false;
+    document.getElementById('btn-check-open').disabled = false;
+    document.getElementById('btn-check-open').style.display = '';
+    document.getElementById('model-answer').className = 'model-answer';
+    document.getElementById('self-eval').className = 'self-eval';
+    document.getElementById('self-eval-label').style.display = 'none';
+  }
+}
+
+function renderMCOptions(q) {
+  const list = document.getElementById('options-list');
+  list.innerHTML = '';
+  const letters = ['A', 'B', 'C', 'D'];
+  (q.options || []).forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="option-letter">${letters[i]}</span><span>${opt}</span>`;
+    btn.addEventListener('click', () => answerMC(i, q));
+    list.appendChild(btn);
+  });
+}
+
+function answerMC(chosen, q) {
+  if (state.answeredCurrent) return;
+  state.answeredCurrent = true;
+
+  const correct = typeof q.correct === 'number' ? q.correct : parseInt(q.correct) || 0;
+  const isCorrect = chosen === correct;
+
+  state.answers.push({ correct: isCorrect, type: 'mc', chosen, correctIdx: correct });
+
+  // Update option buttons
+  const btns = document.querySelectorAll('.option-btn');
+  btns.forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === correct) btn.classList.add('correct');
+    if (i === chosen && !isCorrect) btn.classList.add('wrong');
+  });
+
+  // Show explanation
+  if (q.explanation) {
+    const exp = document.getElementById('explanation');
+    exp.className = 'explanation show' + (isCorrect ? '' : ' wrong-exp');
+    exp.textContent = (isCorrect ? '✓ Správně! ' : '✗ Špatně. ') + q.explanation;
+  }
+
+  // Update score
+  const correctCount = state.answers.filter(a => a.correct).length;
+  document.getElementById('q-score-live').textContent = `${correctCount} správně`;
+
+  document.getElementById('btn-next').disabled = false;
+}
+
+function checkOpenAnswer() {
+  const q = state.questions[state.currentQ];
+  const userAnswer = document.getElementById('open-answer').value.trim();
+  if (userAnswer.length < 2) {
+    showToast('Nejprve napište svou odpověď', 'err');
+    return;
+  }
+
+  document.getElementById('open-answer').disabled = true;
+  document.getElementById('btn-check-open').disabled = true;
+  document.getElementById('btn-check-open').style.display = 'none';
+
+  // Show model answer
+  document.getElementById('model-answer-text').textContent = q.answer || '';
+  document.getElementById('model-answer').classList.add('show');
+
+  // Show keyword matching
+  const kwRow = document.getElementById('keywords-row');
+  kwRow.innerHTML = '';
+  if (Array.isArray(q.keywords) && q.keywords.length > 0) {
+    const lower = userAnswer.toLowerCase();
+    q.keywords.forEach(kw => {
+      const span = document.createElement('span');
+      span.className = 'keyword' + (lower.includes(kw.toLowerCase()) ? ' matched' : '');
+      span.textContent = kw;
+      kwRow.appendChild(span);
+    });
+  }
+
+  // Show self-evaluation
+  document.getElementById('self-eval-label').style.display = '';
+  document.getElementById('self-eval').classList.add('show');
+
+  // Store user answer for review
+  state._pendingOpenAnswer = userAnswer;
+}
+
+function selfEval(isCorrect) {
+  if (state.answeredCurrent) return;
+  state.answeredCurrent = true;
+
+  state.answers.push({
+    correct: isCorrect,
+    type: 'open',
+    userAnswer: state._pendingOpenAnswer || ''
+  });
+
+  document.getElementById('self-eval').className = 'self-eval';
+  document.getElementById('self-eval-label').style.display = 'none';
+
+  const correctCount = state.answers.filter(a => a.correct).length;
+  document.getElementById('q-score-live').textContent = `${correctCount} správně`;
+
+  document.getElementById('btn-next').disabled = false;
+}
+
+function nextQuestion() {
+  state.currentQ++;
+  if (state.currentQ >= state.questions.length) {
+    showResults();
+  } else {
+    renderQuestion();
+  }
+}
+
+// ============================================================
+// RESULTS
+// ============================================================
+function showResults() {
+  showScreen('screen-results');
+
+  const total = state.questions.length;
+  const correct = state.answers.filter(a => a.correct).length;
+  const pct = Math.round((correct / total) * 100);
+
+  // Score ring animation
+  const circumference = 2 * Math.PI * 60; // r=60
+  const arc = document.getElementById('score-arc');
+  arc.style.strokeDashoffset = circumference;
+  setTimeout(() => {
+    arc.style.transition = 'stroke-dashoffset 1s ease';
+    arc.style.strokeDashoffset = circumference * (1 - pct / 100);
+    arc.style.stroke = pct >= 70 ? '#16a34a' : pct >= 40 ? '#d97706' : '#dc2626';
+  }, 100);
+
+  // Counter animation
+  const numEl = document.getElementById('score-num');
+  let count = 0;
+  const inc = setInterval(() => {
+    count = Math.min(count + 1, correct);
+    numEl.textContent = count;
+    if (count >= correct) clearInterval(inc);
+  }, 60);
+
+  document.getElementById('score-den').textContent = `/ ${total}`;
+
+  let msg, sub;
+  if (pct >= 90) { msg = '🏆 Výborně!'; sub = 'Skvělý výsledek, perfektní zvládnutí materiálu!'; }
+  else if (pct >= 70) { msg = '👍 Dobrá práce!'; sub = 'Látku máte dobře zvládnutou.'; }
+  else if (pct >= 50) { msg = '📖 Dobrý základ'; sub = 'Některé části si zaslouží opakování.'; }
+  else { msg = '💪 Pokračujte!'; sub = 'Text si projděte znovu a kvíz zopakujte.'; }
+
+  document.getElementById('score-msg').textContent = msg;
+  document.getElementById('score-sub').textContent = sub;
+
+  // Review list
+  const list = document.getElementById('review-list');
+  list.innerHTML = '';
+  const letters = ['A', 'B', 'C', 'D'];
+
+  state.questions.forEach((q, i) => {
+    const ans = state.answers[i];
+    if (!ans) return;
+    const div = document.createElement('div');
+    div.className = 'review-item ' + (ans.correct ? 'correct-item' : 'wrong-item');
+
+    let answerText = '';
+    if (q.type === 'multiple_choice') {
+      const correctOpt = q.options?.[q.correct] || '';
+      if (ans.correct) {
+        answerText = `✓ ${letters[ans.correctIdx]}: ${correctOpt}`;
+      } else {
+        const chosenOpt = q.options?.[ans.chosen] || '?';
+        answerText = `✗ Vaše: ${letters[ans.chosen]}: ${chosenOpt} → Správně: ${letters[ans.correctIdx]}: ${correctOpt}`;
+      }
+    } else {
+      answerText = ans.correct ? `✓ Správně (vlastní hodnocení)` : `✗ Špatně → Vzor: ${q.answer}`;
+    }
+
+    div.innerHTML = `<div class="review-q">${i + 1}. ${q.question}</div><div class="review-a">${answerText}</div>`;
+    list.appendChild(div);
+  });
+
+  // Clear saved quiz data (finished)
+  Store.remove('savedQuiz');
+}
+
+// ============================================================
+// GENERATE QUIZ
+// ============================================================
+async function generateQuiz() {
+  if (!state.text) { showToast('Nejprve nahrajte soubor', 'err'); return; }
+
+  showScreen('screen-generating');
+  const genStatus = document.getElementById('gen-status');
+  genStatus.textContent = 'Analyzuji text…';
+
+  // Rotating status messages
+  const msgs = ['Analyzuji text…', 'Tvořím otázky…', 'Generuji odpovědi…', 'Dokončuji kvíz…'];
+  let msgI = 0;
+  const msgTimer = setInterval(() => {
+    msgI = (msgI + 1) % msgs.length;
+    genStatus.textContent = msgs[msgI];
+  }, 3500);
+
+  try {
+    const questions = await API.generateQuestions(state.text, state.difficulty, state.apiKey);
+    clearInterval(msgTimer);
+
+    state.questions = questions;
+    state.currentQ = 0;
+    state.answers = [];
+    state.answeredCurrent = false;
+
+    // Save to localStorage for offline
+    Store.set('savedQuiz', {
+      questions,
+      difficulty: state.difficulty,
+      fileName: state.fileName,
+      savedAt: Date.now()
+    });
+
+    showScreen('screen-quiz');
+    renderQuestion();
+  } catch (err) {
+    clearInterval(msgTimer);
+    showToast(err.message, 'err');
+    showScreen('screen-upload');
+  }
+}
+
+// ============================================================
+// UPLOAD SCREEN
+// ============================================================
+function showUploadScreen() {
+  showScreen('screen-upload');
+
+  // Check for saved quiz
+  const saved = Store.get('savedQuiz');
+  const banner = document.getElementById('saved-banner');
+  if (saved && saved.questions && saved.questions.length > 0) {
+    const date = new Date(saved.savedAt);
+    const dateStr = date.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+    document.getElementById('saved-banner-sub').textContent =
+      `${saved.fileName || 'Uložený kvíz'} · ${dateStr}`;
+    banner.classList.remove('hidden');
+  } else {
+    banner.classList.add('hidden');
+  }
+}
+
+function resumeSavedQuiz() {
+  const saved = Store.get('savedQuiz');
+  if (!saved) return;
+  state.questions = saved.questions;
+  state.difficulty = saved.difficulty;
+  state.fileName = saved.fileName;
+  state.currentQ = 0;
+  state.answers = [];
+  state.answeredCurrent = false;
+  showScreen('screen-quiz');
+  renderQuestion();
+}
+
+function setFile(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  document.getElementById('file-icon').textContent = getFileIcon(ext);
+  document.getElementById('file-name').textContent = file.name;
+  document.getElementById('file-size').textContent = formatFileSize(file.size);
+  document.getElementById('file-selected').classList.remove('hidden');
+  document.getElementById('upload-zone').style.display = 'none';
+
+  // Parse the file
+  FileParser.parse(file).then(text => {
+    state.text = text;
+    state.fileName = file.name;
+    document.getElementById('btn-generate').disabled = false;
+    showToast(`Soubor načten (${Math.round(text.length / 1000)}k znaků)`, 'ok');
+  }).catch(err => {
+    showToast(err.message, 'err');
+    removeFile();
+  });
+}
+
+function removeFile() {
+  state.text = '';
+  state.fileName = '';
+  document.getElementById('file-selected').classList.add('hidden');
+  document.getElementById('upload-zone').style.display = '';
+  document.getElementById('btn-generate').disabled = true;
+  document.getElementById('file-input').value = '';
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  // Register service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+
+  // Generate touch icon from canvas for iOS
+  try {
+    const c = document.createElement('canvas');
+    c.width = c.height = 192;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#2563eb';
+    ctx.beginPath();
+    ctx.roundRect(0, 0, 192, 192, 40);
+    ctx.fill();
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 110px -apple-system, Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('?', 96, 100);
+    document.getElementById('apple-icon').href = c.toDataURL('image/png');
+  } catch {}
+
+  // Setup API key screen
+  if (!state.apiKey) {
+    showScreen('screen-setup');
+  } else {
+    showUploadScreen();
+  }
+
+  // ---- EVENT LISTENERS ----
+
+  // Setup screen
+  const apiInput = document.getElementById('api-key-input');
+  apiInput.value = state.apiKey;
+  document.getElementById('btn-save-key').addEventListener('click', () => {
+    const key = apiInput.value.trim();
+    if (!key || key.length < 20) {
+      showToast('Zadejte platný API klíč', 'err');
+      return;
+    }
+    state.apiKey = key;
+    Store.set('apiKey', key);
+    showToast('API klíč uložen', 'ok');
+    showUploadScreen();
+  });
+  apiInput.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('btn-save-key').click(); });
+
+  // Upload zone
+  const zone = document.getElementById('upload-zone');
+  const fileInput = document.getElementById('file-input');
+
+  zone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => { if (fileInput.files[0]) setFile(fileInput.files[0]); });
+
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) setFile(file);
+  });
+
+  document.getElementById('btn-remove-file').addEventListener('click', removeFile);
+
+  // Difficulty buttons
+  document.querySelectorAll('.diff-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.difficulty = btn.dataset.diff;
+    });
+  });
+
+  // Generate button
+  document.getElementById('btn-generate').addEventListener('click', generateQuiz);
+
+  // Saved quiz resume
+  document.getElementById('btn-resume').addEventListener('click', resumeSavedQuiz);
+
+  // Change API key
+  document.getElementById('btn-change-key').addEventListener('click', () => {
+    showScreen('screen-setup');
+    document.getElementById('api-key-input').value = state.apiKey;
+  });
+  document.getElementById('btn-change-key-results').addEventListener('click', () => {
+    showScreen('screen-setup');
+    document.getElementById('api-key-input').value = state.apiKey;
+  });
+
+  // Quiz controls
+  document.getElementById('btn-check-open').addEventListener('click', checkOpenAnswer);
+  document.getElementById('btn-self-yes').addEventListener('click', () => selfEval(true));
+  document.getElementById('btn-self-no').addEventListener('click', () => selfEval(false));
+  document.getElementById('btn-next').addEventListener('click', () => {
+    if (!state.answeredCurrent) {
+      showToast('Nejprve odpovězte na otázku', 'err');
+      return;
+    }
+    nextQuestion();
+  });
+  document.getElementById('btn-quit-quiz').addEventListener('click', () => {
+    if (confirm('Opravdu chcete ukončit kvíz?')) {
+      showUploadScreen();
+    }
+  });
+
+  // Results controls
+  document.getElementById('btn-retry').addEventListener('click', () => {
+    state.currentQ = 0;
+    state.answers = [];
+    state.answeredCurrent = false;
+    showScreen('screen-quiz');
+    renderQuestion();
+  });
+  document.getElementById('btn-new-quiz').addEventListener('click', () => {
+    state.questions = null;
+    state.text = '';
+    state.fileName = '';
+    removeFile();
+    showUploadScreen();
+  });
+}
+
+// Start the app
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
