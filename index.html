@@ -434,6 +434,41 @@
     #toast.err { background: var(--error); }
     #toast.ok { background: var(--success); }
 
+    /* Recent files */
+    .recent-file-item {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 8px;
+    }
+    .recent-file-item:last-child { margin-bottom: 0; }
+    .recent-file-btn {
+      flex: 1; display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      cursor: pointer; font-family: inherit; text-align: left;
+      transition: all 0.15s; min-width: 0;
+    }
+    .recent-file-btn:hover { border-color: var(--primary); background: var(--primary-light); }
+    .recent-file-btn:active { transform: scale(0.98); }
+    .recent-file-icon { font-size: 1.4rem; flex-shrink: 0; }
+    .recent-file-info { flex: 1; min-width: 0; }
+    .recent-file-name { font-weight: 600; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+    .recent-file-meta { font-size: 0.75rem; color: var(--text-muted); }
+    .recent-file-arrow { color: var(--text-light); font-size: 1.2rem; flex-shrink: 0; }
+    .recent-file-delete {
+      background: none; border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm); padding: 8px 10px;
+      font-size: 1rem; color: var(--text-muted); cursor: pointer;
+      flex-shrink: 0; transition: all 0.15s; font-family: inherit;
+    }
+    .recent-file-delete:hover { border-color: var(--error); color: var(--error); background: var(--error-light); }
+    /* Topic progress */
+    .topic-progress {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 0.73rem; font-weight: 500; margin-top: 5px;
+    }
+    .prog-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
     @supports (padding-bottom: env(safe-area-inset-bottom)) {
       #app { padding-bottom: calc(40px + env(safe-area-inset-bottom)); }
     }
@@ -449,6 +484,11 @@
       <div class="app-logo">📚</div>
       <h1 class="app-title">Kvízový Průvodce</h1>
       <p class="app-subtitle">Nahrajte text a procvičujte libovolně dlouho</p>
+    </div>
+
+    <div id="recent-files-card" class="card" style="display:none; padding:16px 20px;">
+      <div class="card-title">📂 Naposledy otevřené</div>
+      <div id="recent-files-list"></div>
     </div>
 
     <div class="ios-hint">
@@ -671,11 +711,98 @@ const Store = {
 };
 
 // ============================================================
+// FILES DATABASE – ukládá nahrané soubory do localStorage
+// ============================================================
+const FilesDB = {
+  KEY: 'recentFiles',
+  MAX_FILES: 5,
+  MAX_TEXT: 120000,   // max 120 KB textu na soubor
+
+  getAll() { return Store.get(this.KEY, []); },
+
+  save(name, text, size) {
+    // Nahradit existující záznam se stejným názvem
+    const list = this.getAll().filter(f => f.name !== name);
+    const id = 'f' + Date.now();
+    list.unshift({ id, name, size, text: text.slice(0, this.MAX_TEXT), topics: null, savedAt: Date.now() });
+    try { Store.set(this.KEY, list.slice(0, this.MAX_FILES)); } catch { /* quota exceeded */ }
+    return id;
+  },
+
+  updateTopics(id, topics) {
+    const list = this.getAll();
+    const f = list.find(f => f.id === id);
+    if (f) { f.topics = topics; try { Store.set(this.KEY, list); } catch {} }
+  },
+
+  getById(id) { return this.getAll().find(f => f.id === id) || null; },
+
+  delete(id) {
+    Store.set(this.KEY, this.getAll().filter(f => f.id !== id));
+    // Smazat i veškerý progress pro tento soubor
+    try {
+      Object.keys(localStorage)
+        .filter(k => k.startsWith('prog_' + id + '_'))
+        .forEach(k => localStorage.removeItem(k));
+    } catch {}
+  }
+};
+
+// ============================================================
+// PROGRESS DATABASE – ukládá historii odpovědí (správně/špatně)
+// ============================================================
+const ProgressDB = {
+  key(fileId, topicId) { return `prog_${fileId}_${topicId}`; },
+
+  load(fileId, topicId) {
+    return Store.get(this.key(fileId, topicId), { totalAnswered: 0, totalCorrect: 0, questions: {} });
+  },
+
+  recordAnswer(fileId, topicId, question, isCorrect) {
+    if (!fileId || !topicId) return;
+    const p = this.load(fileId, topicId);
+    p.totalAnswered++;
+    if (isCorrect) p.totalCorrect++;
+    const qt = question.question;
+    if (!p.questions[qt]) p.questions[qt] = { correct: 0, wrong: 0, q: null };
+    if (isCorrect) p.questions[qt].correct++;
+    else p.questions[qt].wrong++;
+    p.questions[qt].q = question;   // uchovat aktuální podobu otázky
+    try { Store.set(this.key(fileId, topicId), p); } catch {}
+  },
+
+  getStats(fileId, topicId) {
+    if (!fileId) return { total: 0, pct: null };
+    const p = this.load(fileId, topicId);
+    return {
+      total: p.totalAnswered,
+      pct: p.totalAnswered > 0 ? Math.round(p.totalCorrect / p.totalAnswered * 100) : null
+    };
+  },
+
+  // Vrátí otázky, s nimiž měl uživatel potíže (seřazeno od nejhorší chybovosti), max 3 na téma
+  getHardQuestions(fileId, topicId) {
+    if (!fileId) return [];
+    const p = this.load(fileId, topicId);
+    return Object.values(p.questions)
+      .filter(e => e.wrong > 0 && e.q)
+      .sort((a, b) => {
+        const ra = a.wrong / (a.wrong + a.correct);
+        const rb = b.wrong / (b.wrong + b.correct);
+        return rb - ra;
+      })
+      .slice(0, 3)
+      .map(e => e.q);
+  }
+};
+
+// ============================================================
 // APP STATE
 // ============================================================
 const state = {
   text: '',
   fileName: '',
+  currentFileId: null,    // ID of the currently loaded file (for progress tracking)
   topics: [],
   selectedTopics: [],
   difficulty: 'medium',
@@ -912,6 +1039,7 @@ function setFile(file) {
   FileParser.parse(file).then(text => {
     state.text = text;
     state.fileName = file.name;
+    state.currentFileId = FilesDB.save(file.name, text, file.size);
     document.getElementById('btn-analyze').disabled = false;
     showToast(`Soubor načten (${Math.round(text.length / 1000)}k znaků)`, 'ok');
   }).catch(err => {
@@ -923,10 +1051,71 @@ function setFile(file) {
 function removeFile() {
   state.text = '';
   state.fileName = '';
+  state.currentFileId = null;
   document.getElementById('file-selected').classList.add('hidden');
   document.getElementById('upload-zone').style.display = '';
   document.getElementById('btn-analyze').disabled = true;
   document.getElementById('file-input').value = '';
+}
+
+// ============================================================
+// RECENT FILES
+// ============================================================
+function renderRecentFiles() {
+  const files = FilesDB.getAll();
+  const card = document.getElementById('recent-files-card');
+  const list = document.getElementById('recent-files-list');
+  if (files.length === 0) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  list.innerHTML = '';
+  files.forEach(file => {
+    const date = new Date(file.savedAt).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short' });
+    const ext = file.name.split('.').pop().toLowerCase();
+    const item = document.createElement('div');
+    item.className = 'recent-file-item';
+    item.innerHTML = `
+      <button class="recent-file-btn">
+        <span class="recent-file-icon">${getFileIcon(ext)}</span>
+        <div class="recent-file-info">
+          <div class="recent-file-name">${file.name}</div>
+          <div class="recent-file-meta">${date} · ${formatFileSize(file.size)}</div>
+        </div>
+        <span class="recent-file-arrow">›</span>
+      </button>
+      <button class="recent-file-delete" title="Smazat ze seznamu">🗑</button>`;
+    item.querySelector('.recent-file-btn').addEventListener('click', () => loadSavedFile(file.id));
+    item.querySelector('.recent-file-delete').addEventListener('click', () => deleteSavedFile(file.id));
+    list.appendChild(item);
+  });
+}
+
+async function loadSavedFile(id) {
+  const file = FilesDB.getById(id);
+  if (!file) { showToast('Soubor nenalezen', 'err'); return; }
+  state.text = file.text;
+  state.fileName = file.name;
+  state.currentFileId = id;
+  if (file.topics && file.topics.length > 0) {
+    renderTopics(file.topics);
+  } else {
+    showScreen('screen-analyzing');
+    document.getElementById('analyzing-title').textContent = 'Analyzuji text…';
+    document.getElementById('analyzing-sub').textContent = 'Rozpoznávám témata a kapitoly';
+    try {
+      const topics = await API.analyzeText(state.text);
+      FilesDB.updateTopics(id, topics);
+      renderTopics(topics);
+    } catch (err) {
+      showToast(err.message, 'err');
+      showScreen('screen-upload');
+    }
+  }
+}
+
+function deleteSavedFile(id) {
+  FilesDB.delete(id);
+  renderRecentFiles();
+  showToast('Soubor smazán ze seznamu', '');
 }
 
 // ============================================================
@@ -940,6 +1129,15 @@ function renderTopics(topics) {
   const list = document.getElementById('topics-list');
   list.innerHTML = '';
   topics.forEach(topic => {
+    const stats = ProgressDB.getStats(state.currentFileId, topic.id);
+    let statsHtml = '';
+    if (stats.total > 0) {
+      const color = stats.pct >= 70 ? '#16a34a' : stats.pct >= 50 ? '#d97706' : '#dc2626';
+      statsHtml = `<div class="topic-progress">
+        <span class="prog-dot" style="background:${color}"></span>
+        <span>${stats.total} otázek · <strong style="color:${color}">${stats.pct}% správně</strong></span>
+      </div>`;
+    }
     const item = document.createElement('div');
     item.className = 'topic-item selected';
     item.dataset.id = topic.id;
@@ -948,6 +1146,7 @@ function renderTopics(topics) {
       <div>
         <div class="topic-name">${topic.name}</div>
         <div class="topic-desc">${topic.description}</div>
+        ${statsHtml}
       </div>`;
     item.addEventListener('click', () => toggleTopic(topic, item));
     list.appendChild(item);
@@ -984,6 +1183,7 @@ async function analyzeText() {
 
   try {
     const topics = await API.analyzeText(state.text);
+    if (state.currentFileId) FilesDB.updateTopics(state.currentFileId, topics);
     renderTopics(topics);
   } catch (err) {
     showToast(err.message, 'err');
@@ -1005,6 +1205,17 @@ function startSession() {
   state.sessionActive = true;
   state.prefetchQueue = [];
   prefetchPromise = null;
+
+  // Pre-load otázky se špatnou historií (rovnoměrně rozložené na začátek sezení)
+  let hardDelay = 0;
+  state.selectedTopics.forEach(topic => {
+    const hardQs = ProgressDB.getHardQuestions(state.currentFileId, topic.id);
+    hardQs.forEach(q => {
+      if (!state.retryQueue.some(r => r.question.question === q.question)) {
+        state.retryQueue.push({ question: q, delay: hardDelay++ });
+      }
+    });
+  });
 
   updateStats();
   showScreen('screen-quiz');
@@ -1063,6 +1274,7 @@ async function loadNextQuestion() {
       state.text, topic.name, qType, state.askedQuestions, state.difficulty
     );
     question._topicName = topic.name;
+    question._topicId = topic.id;
     renderQuestion(question, 'new');
   } catch (err) {
     state.currentTopicIdx--;
@@ -1106,6 +1318,7 @@ function maybePrefetch() {
   )
     .then(question => {
       question._topicName = topic.name;
+      question._topicId = topic.id;
       state.prefetchQueue.push(question);
     })
     .catch(() => {
@@ -1355,6 +1568,9 @@ function onAnswerSubmitted(isCorrect) {
 
   const q = state.currentQuestion;
 
+  // Uložit výsledek do progress DB
+  ProgressDB.recordAnswer(state.currentFileId, q._topicId, q, isCorrect);
+
   if (!isCorrect) {
     // Add to retry queue: re-ask after 3–5 questions
     if (!state.retryQueue.some(i => i.question.question === q.question)) {
@@ -1433,6 +1649,7 @@ function init() {
   }
 
   showScreen('screen-upload');
+  renderRecentFiles();
 
   // Upload zone
   const zone = document.getElementById('upload-zone');
@@ -1520,9 +1737,11 @@ function init() {
   document.getElementById('btn-new-session').addEventListener('click', () => {
     state.text = '';
     state.fileName = '';
+    state.currentFileId = null;
     state.topics = [];
     state.selectedTopics = [];
     removeFile();
+    renderRecentFiles();
     showScreen('screen-upload');
   });
 }
