@@ -396,37 +396,6 @@
 <div id="toast"></div>
 <div id="app">
 
-  <!-- ===== SCREEN: SETUP ===== -->
-  <div id="screen-setup" class="screen">
-    <div class="app-header">
-      <div class="app-logo">?</div>
-      <h1 class="app-title">Kvízový Průvodce</h1>
-      <p class="app-subtitle">Učte se z vlastních textů pomocí AI</p>
-    </div>
-    <div class="card">
-      <div class="card-title">🔑 Nastavení API klíče</div>
-      <div class="form-group">
-        <label class="form-label">Claude API klíč</label>
-        <input type="password" id="api-key-input" class="form-input"
-          placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false">
-        <p class="form-hint">
-          Klíč je uložen pouze ve vašem prohlížeči a nikam se neodesílá.<br>
-          Získejte klíč na <strong>console.anthropic.com</strong>
-        </p>
-      </div>
-      <button class="btn btn-primary" id="btn-save-key">
-        <span>Uložit a pokračovat</span> →
-      </button>
-    </div>
-    <div class="card" style="background: var(--primary-light); border-color: var(--primary-border);">
-      <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.6;">
-        <strong>ℹ️ Jak to funguje:</strong><br>
-        Nahrajte libovolný dokument, zvolte obtížnost a aplikace pomocí AI vygeneruje výukový kvíz.
-        Kvíz se uloží do telefonu a funguje i offline.
-      </p>
-    </div>
-  </div>
-
   <!-- ===== SCREEN: UPLOAD ===== -->
   <div id="screen-upload" class="screen hidden">
     <div class="app-header">
@@ -489,10 +458,6 @@
       🤖 Generovat kvíz
     </button>
 
-    <div class="section-gap"></div>
-    <button class="btn btn-ghost btn-sm" id="btn-change-key" style="margin-top: 8px;">
-      🔑 Změnit API klíč
-    </button>
   </div>
 
   <!-- ===== SCREEN: GENERATING ===== -->
@@ -586,7 +551,6 @@
       <button class="btn btn-secondary" id="btn-retry">🔄 Znovu</button>
       <button class="btn btn-primary" id="btn-new-quiz">📄 Nový kvíz</button>
     </div>
-    <button class="btn btn-ghost btn-sm" id="btn-change-key-results">🔑 Změnit API klíč</button>
   </div>
 
 </div>
@@ -610,7 +574,6 @@ const Store = {
 // APP STATE
 // ============================================================
 const state = {
-  apiKey: Store.get('apiKey', ''),
   questions: null,
   currentQ: 0,
   answers: [],        // { correct: bool, userAnswer: string, type: string }
@@ -763,101 +726,28 @@ const FileParser = {
 };
 
 // ============================================================
-// CLAUDE API
+// API CLIENT – volá Vercel serverless funkci /api/generate
 // ============================================================
 const API = {
-  async generateQuestions(text, difficulty, apiKey) {
-    const diffDescriptions = {
-      easy:   'Lehká – otázky na konkrétní fakta přímo zmíněná v textu. Odpovědi jsou zřejmé ze čtení.',
-      medium: 'Střední – otázky vyžadující porozumění, schopnost shrnout a propojit informace z textu.',
-      hard:   'Těžká – analytické otázky. Vyžadují hlubší porozumění, schopnost vyvodit závěry a kriticky zhodnotit.'
-    };
-
-    const trimmedText = text.slice(0, 8000);
-
-    const prompt = `Jsi zkušený pedagog. Z níže uvedeného textu vytvoř výukový kvíz v ČEŠTINĚ.
-
-Obtížnost: ${diffDescriptions[difficulty]}
-
-Vytvoř přesně 10 otázek:
-- Otázky 1–6: výběr ze čtyř možností (typ "multiple_choice")
-- Otázky 7–10: otevřená otázka na krátkou odpověď (typ "open")
-
-DŮLEŽITÉ PRAVIDLA:
-- Všechny otázky a odpovědi MUSÍ být v češtině
-- Otázky musí vycházet výhradně z obsahu textu
-- U multiple_choice: pole "correct" je INDEX (0=A, 1=B, 2=C, 3=D) správné odpovědi
-- Odpověz POUZE platným JSON objektem, bez jakéhokoliv dalšího textu nebo markdown formátování
-
-Formát:
-{
-  "questions": [
-    {
-      "id": 1,
-      "type": "multiple_choice",
-      "question": "Text otázky?",
-      "options": ["Možnost A", "Možnost B", "Možnost C", "Možnost D"],
-      "correct": 0,
-      "explanation": "Stručné vysvětlení proč je tato odpověď správná."
-    },
-    {
-      "id": 7,
-      "type": "open",
-      "question": "Text otevřené otázky?",
-      "answer": "Vzorová správná odpověď.",
-      "keywords": ["klíčové slovo 1", "klíčové slovo 2", "klíčové slovo 3"]
-    }
-  ]
-}
-
-TEXT K ANALÝZE:
----
-${trimmedText}
----`;
-
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+  async generateQuestions(text, difficulty) {
+    const resp = await fetch('/api/generate', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-opus-4-6',
-        max_tokens: 4096,
-        messages: [{ role: 'user', content: prompt }]
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, difficulty })
     });
 
+    const data = await resp.json().catch(() => ({}));
+
     if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      const msg = err.error?.message || `HTTP ${resp.status}`;
-      if (resp.status === 401) throw new Error('Neplatný API klíč. Zkontrolujte klíč a zkuste znovu.');
-      if (resp.status === 429) throw new Error('Překročen limit požadavků. Chvíli počkejte a zkuste znovu.');
-      if (resp.status === 529) throw new Error('Služba je přetížena. Zkuste to za chvíli.');
-      throw new Error(`Chyba API: ${msg}`);
+      if (resp.status === 429) throw new Error('Překročen limit požadavků. Zkuste to za chvíli.');
+      if (resp.status === 503) throw new Error('Služba je nedostupná. Zkontrolujte připojení.');
+      throw new Error(data.error || `Chyba serveru: ${resp.status}`);
     }
 
-    const data = await resp.json();
-    return this.parseResponse(data.content[0].text);
-  },
-
-  parseResponse(raw) {
-    let s = raw.trim();
-    // Strip markdown code blocks
-    s = s.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
-    // Find JSON boundaries
-    const start = s.indexOf('{');
-    const end = s.lastIndexOf('}');
-    if (start === -1 || end === -1) throw new Error('Nepodařilo se zpracovat odpověď AI. Zkuste to znovu.');
-    s = s.slice(start, end + 1);
-    let parsed;
-    try { parsed = JSON.parse(s); }
-    catch { throw new Error('Chyba při zpracování otázek. Zkuste to znovu.'); }
-    if (!Array.isArray(parsed.questions) || parsed.questions.length === 0)
-      throw new Error('AI nevygenerovala žádné otázky. Zkuste jiný text.');
-    return parsed.questions;
+    if (!Array.isArray(data.questions) || data.questions.length === 0) {
+      throw new Error('Server nevrácel žádné otázky. Zkuste to znovu.');
+    }
+    return data.questions;
   }
 };
 
@@ -1143,7 +1033,7 @@ async function generateQuiz() {
   }, 3500);
 
   try {
-    const questions = await API.generateQuestions(state.text, state.difficulty, state.apiKey);
+    const questions = await API.generateQuestions(state.text, state.difficulty);
     clearInterval(msgTimer);
 
     state.questions = questions;
@@ -1257,30 +1147,9 @@ function init() {
     document.getElementById('apple-icon').href = c.toDataURL('image/png');
   } catch {}
 
-  // Setup API key screen
-  if (!state.apiKey) {
-    showScreen('screen-setup');
-  } else {
-    showUploadScreen();
-  }
+  showUploadScreen();
 
   // ---- EVENT LISTENERS ----
-
-  // Setup screen
-  const apiInput = document.getElementById('api-key-input');
-  apiInput.value = state.apiKey;
-  document.getElementById('btn-save-key').addEventListener('click', () => {
-    const key = apiInput.value.trim();
-    if (!key || key.length < 20) {
-      showToast('Zadejte platný API klíč', 'err');
-      return;
-    }
-    state.apiKey = key;
-    Store.set('apiKey', key);
-    showToast('API klíč uložen', 'ok');
-    showUploadScreen();
-  });
-  apiInput.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('btn-save-key').click(); });
 
   // Upload zone
   const zone = document.getElementById('upload-zone');
@@ -1314,16 +1183,6 @@ function init() {
 
   // Saved quiz resume
   document.getElementById('btn-resume').addEventListener('click', resumeSavedQuiz);
-
-  // Change API key
-  document.getElementById('btn-change-key').addEventListener('click', () => {
-    showScreen('screen-setup');
-    document.getElementById('api-key-input').value = state.apiKey;
-  });
-  document.getElementById('btn-change-key-results').addEventListener('click', () => {
-    showScreen('screen-setup');
-    document.getElementById('api-key-input').value = state.apiKey;
-  });
 
   // Quiz controls
   document.getElementById('btn-check-open').addEventListener('click', checkOpenAnswer);
