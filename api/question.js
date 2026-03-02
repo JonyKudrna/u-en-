@@ -1,11 +1,12 @@
 const TYPE_PROMPTS = {
   multiple_choice: `Vytvoř jednu otázku s výběrem ze čtyř možností.
+Správnou odpověď NÁHODNĚ umísti na různé pozice — ne vždy na pozici 0 (A). Střídej pozice A, B, C, D rovnoměrně.
 Formát JSON:
 {
   "type": "multiple_choice",
   "question": "Text otázky?",
   "options": ["Možnost A", "Možnost B", "Možnost C", "Možnost D"],
-  "correct": 0,
+  "correct": 2,
   "explanation": "Krátké vysvětlení správné odpovědi."
 }`,
   true_false: `Vytvoř jedno tvrzení, které je buď pravdivé nebo nepravdivé.
@@ -16,13 +17,17 @@ Formát JSON:
   "correct": true,
   "explanation": "Krátké vysvětlení proč je tvrzení pravdivé/nepravdivé."
 }`,
-  open: `Vytvoř jednu otevřenou otázku na krátkou odpověď (1-3 věty).
+  open: `Vytvoř jednu otevřenou otázku na VELMI KRÁTKOU odpověď (maximálně 5 slov).
+Ptej se na konkrétní fakta: jméno, rok, místo, název, počet apod.
+Vhodné formáty: "Jak se jmenuje...?", "Ve kterém roce...?", "Kdo byl...?", "Kde se nachází...?", "Kolik...?"
+VYHNI SE otázkám vyžadujícím vysvětlení nebo popis.
+Do textu otázky vlož pokyn v závorce: "(Odpověz maximálně 5 slovy.)"
 Formát JSON:
 {
   "type": "open",
-  "question": "Text otázky?",
-  "answer": "Vzorová správná odpověď.",
-  "keywords": ["klíčové slovo 1", "klíčové slovo 2", "klíčové slovo 3"]
+  "question": "Jak se jmenuje...? (Odpověz maximálně 5 slovy.)",
+  "answer": "Vzorová odpověď v 1–5 slovech.",
+  "keywords": ["klíčové slovo"]
 }`,
   explain: `Vytvoř jednu otázku vyžadující delší vysvětlení nebo popis (3-5 vět).
 Formát JSON:

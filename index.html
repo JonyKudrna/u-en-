@@ -814,7 +814,7 @@ const state = {
   reviewQueue: [],        // [ { question, dueAt } ]
   currentQuestion: null,
   answeredCurrent: false,
-  currentTopicIdx: 0,
+  topicQueue: [],         // round-robin queue — každé téma přesně jednou, pak znovu
   sessionActive: false,
   prefetchQueue: []       // questions pre-fetched in background
 };
@@ -1024,6 +1024,33 @@ function pickQuestionType() {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
+// Vrátí další téma z round-robin fronty.
+// Každé vybrané téma se použije přesně jednou, pak se fronta zamíchá znovu.
+function nextTopic() {
+  if (state.topicQueue.length === 0) {
+    // Fisher-Yates shuffle pro rovnoměrné střídání
+    const arr = [...state.selectedTopics];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    state.topicQueue = arr;
+  }
+  return state.topicQueue.shift();
+}
+
+// Zamíchá možnosti MC otázky tak, aby správná odpověď nebyla vždy na stejné pozici.
+function shuffleMCOptions(q) {
+  if (q.type !== 'multiple_choice' || !Array.isArray(q.options)) return q;
+  const correctText = q.options[q.correct];
+  const opts = [...q.options];
+  for (let i = opts.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [opts[i], opts[j]] = [opts[j], opts[i]];
+  }
+  return { ...q, options: opts, correct: opts.indexOf(correctText) };
+}
+
 // ============================================================
 // UPLOAD SCREEN
 // ============================================================
@@ -1200,7 +1227,7 @@ function startSession() {
   state.askedQuestions = [];
   state.retryQueue = [];
   state.reviewQueue = [];
-  state.currentTopicIdx = 0;
+  state.topicQueue = [];
   state.answeredCurrent = false;
   state.sessionActive = true;
   state.prefetchQueue = [];
@@ -1265,9 +1292,8 @@ async function loadNextQuestion() {
 
   // 5. Nothing pre-fetched — fetch now (first question of session or after prefetch error)
   showQuizLoading();
-  const topic = state.selectedTopics[state.currentTopicIdx % state.selectedTopics.length];
+  const topic = nextTopic();
   const qType = pickQuestionType();
-  state.currentTopicIdx++;
 
   try {
     const question = await API.generateQuestion(
@@ -1277,7 +1303,7 @@ async function loadNextQuestion() {
     question._topicId = topic.id;
     renderQuestion(question, 'new');
   } catch (err) {
-    state.currentTopicIdx--;
+    state.topicQueue.unshift(topic); // vrátit téma zpět při chybě
     document.getElementById('q-loading').style.display = 'none';
     document.getElementById('q-content').style.display = 'block';
     document.getElementById('q-text').textContent = '';
@@ -1306,11 +1332,8 @@ function maybePrefetch() {
   // Next question will come from review queue — no API call needed
   if (state.reviewQueue.some(i => i.dueAt <= state.questionsAnswered + 1)) return;
 
-  const topicIdx = state.currentTopicIdx;
-  const topic = state.selectedTopics[topicIdx % state.selectedTopics.length];
+  const topic = nextTopic();
   const qType = pickQuestionType();
-  state.currentTopicIdx++;
-
   const askedSnapshot = state.askedQuestions.slice(-20);
 
   prefetchPromise = API.generateQuestion(
@@ -1322,7 +1345,7 @@ function maybePrefetch() {
       state.prefetchQueue.push(question);
     })
     .catch(() => {
-      state.currentTopicIdx = topicIdx; // release the claimed slot on error
+      state.topicQueue.unshift(topic); // vrátit téma zpět při chybě
     })
     .finally(() => {
       prefetchPromise = null;
@@ -1330,6 +1353,8 @@ function maybePrefetch() {
 }
 
 function renderQuestion(question, mode) {
+  // Zamíchat MC možnosti klientsky – zajistí rovnoměrné rozložení správné odpovědi
+  if (question.type === 'multiple_choice') question = shuffleMCOptions(question);
   state.currentQuestion = question;
   state.answeredCurrent = false;
   state._retryLoad = false;

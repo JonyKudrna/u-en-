@@ -21,7 +21,11 @@ Otázka: ${question}
 Vzorová odpověď: ${expectedAnswer || '(není k dispozici)'}
 Odpověď studenta: ${userAnswer}
 
-Buď velkorysý – pokud student zachytil podstatu, přiznej mu správnost i při jiné formulaci.
+Pravidla hodnocení:
+- Buď velkorysý – pokud student zachytil podstatu nebo klíčové slovo, přiznej správnost.
+- U krátkých faktických otázek (jméno, rok, místo apod.) stačí správné klíčové slovo – nevyžaduj celou větu.
+- Toleruj překlepy a drobné odchylky v pravopisu.
+- Pokud je odpověď jen částečně správná, přiznej správnost pokud zachytila jádro věci.
 Odpověz POUZE platným JSON objektem (žádný text před ani po):
 {
   "correct": true,
