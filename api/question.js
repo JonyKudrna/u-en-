@@ -1,62 +1,39 @@
-const TYPE_PROMPTS = {
-  multiple_choice: `Vytvoř jednu otázku s výběrem ze čtyř možností.
-Správnou odpověď NÁHODNĚ umísti na různé pozice — ne vždy na pozici 0 (A). Střídej pozice A, B, C, D rovnoměrně.
-Formát JSON:
-{
-  "type": "multiple_choice",
-  "question": "Text otázky?",
-  "options": ["Možnost A", "Možnost B", "Možnost C", "Možnost D"],
-  "correct": 2,
-  "explanation": "Krátké vysvětlení správné odpovědi."
-}`,
-  true_false: `Vytvoř jedno tvrzení, které je buď pravdivé nebo nepravdivé.
-Formát JSON:
-{
-  "type": "true_false",
-  "question": "Tvrzení k posouzení.",
-  "correct": true,
-  "explanation": "Krátké vysvětlení proč je tvrzení pravdivé/nepravdivé."
-}`,
-  open: `Vytvoř jednu otevřenou otázku na VELMI KRÁTKOU odpověď (maximálně 5 slov).
-Ptej se na konkrétní fakta: jméno, rok, místo, název, počet apod.
-Vhodné formáty: "Jak se jmenuje...?", "Ve kterém roce...?", "Kdo byl...?", "Kde se nachází...?", "Kolik...?"
-VYHNI SE otázkám vyžadujícím vysvětlení nebo popis.
-Do textu otázky vlož pokyn v závorce: "(Odpověz maximálně 5 slovy.)"
-Formát JSON:
-{
-  "type": "open",
-  "question": "Jak se jmenuje...? (Odpověz maximálně 5 slovy.)",
-  "answer": "Vzorová odpověď v 1–5 slovech.",
-  "keywords": ["klíčové slovo"]
-}`,
-  explain: `Vytvoř jednu otázku vyžadující delší vysvětlení nebo popis (3-5 vět).
-Formát JSON:
-{
-  "type": "explain",
-  "question": "Vysvětli / Popiš / Jak funguje... ?",
-  "answer": "Vzorová odpověď v rozsahu 3-5 vět."
-}`
-};
-
 const DIFF_DESC = {
   easy: 'Lehká – přímá fakta z textu, zřejmé odpovědi.',
   medium: 'Střední – porozumění a propojení informací.',
   hard: 'Těžká – analýza, závěry, kritické hodnocení.'
 };
 
-function buildPrompt(text, topic, questionType, askedQuestions, difficulty) {
+function buildPrompt(text, topic, askedQuestions, masteredQuestions, difficulty) {
   const diff = DIFF_DESC[difficulty] || DIFF_DESC.medium;
-  const typeInstr = TYPE_PROMPTS[questionType] || TYPE_PROMPTS.multiple_choice;
-  const skipPart = askedQuestions.length > 0
-    ? `\nUž byly položeny tyto otázky (NEVYTVÁŘEJ podobné ani stejné): ${askedQuestions.slice(-15).map(q => `"${q}"`).join('; ')}`
-    : '';
 
-  return `Jsi zkušený pedagog. Z textu o tématu "${topic}" vytvoř JEDNU výukovou otázku v ČEŠTINĚ.
-Obtížnost: ${diff}${skipPart}
+  let masteredPart = '';
+  if (masteredQuestions.length > 0) {
+    masteredPart = `\n\nStudent toto JIŽ ZVLÁDL — nikdy nevytvářej otázku na tato ani obsahově podobná témata:\n${masteredQuestions.slice(-30).map(q => `• "${q}"`).join('\n')}`;
+  }
 
-${typeInstr}
+  let recentPart = '';
+  if (askedQuestions.length > 0) {
+    recentPart = `\n\nNedávno položené otázky (nevytvářej duplicitní ani tematicky podobné):\n${askedQuestions.slice(-10).map(q => `• "${q}"`).join('\n')}`;
+  }
 
-DŮLEŽITÉ: Odpověz POUZE platným JSON objektem, žádný text před ani po.
+  return `Jsi zkušený pedagog. Z textu o tématu "${topic}" vytvoř JEDNU novou výukovou otázku s výběrem odpovědí A/B/C/D v ČEŠTINĚ.
+Obtížnost: ${diff}${masteredPart}${recentPart}
+
+Pokyny:
+- Pokrývej RŮZNÉ části a aspekty textu — nejen nejznámější pojmy nebo osobnosti.
+- Každá otázka musí testovat JINÝ fakt nebo koncept než otázky výše.
+- Správnou odpověď NÁHODNĚ umísti na různé pozice (0=A, 1=B, 2=C, 3=D) — nestrkej ji vždy na pozici 0.
+- Všechny čtyři možnosti musí být věrohodné a přibližně stejně dlouhé.
+
+Odpověz POUZE tímto JSON objektem, bez jakéhokoli dalšího textu:
+{
+  "type": "multiple_choice",
+  "question": "Text otázky?",
+  "options": ["Možnost A", "Možnost B", "Možnost C", "Možnost D"],
+  "correct": 2,
+  "explanation": "Krátké vysvětlení správné odpovědi."
+}
 
 TEXT:
 ---
@@ -75,14 +52,17 @@ module.exports = async function handler(req, res) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'Chybí ANTHROPIC_API_KEY.' });
 
-  const { text, topic, questionType, askedQuestions = [], difficulty = 'medium' } = req.body || {};
+  const {
+    text,
+    topic,
+    askedQuestions = [],
+    masteredQuestions = [],
+    difficulty = 'medium'
+  } = req.body || {};
 
   if (!text || typeof text !== 'string' || text.trim().length < 50) {
     return res.status(400).json({ error: 'Text chybí nebo je příliš krátký.' });
   }
-
-  const validTypes = ['multiple_choice', 'true_false', 'open', 'explain'];
-  const qType = validTypes.includes(questionType) ? questionType : 'multiple_choice';
 
   let resp;
   try {
@@ -96,7 +76,7 @@ module.exports = async function handler(req, res) {
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 1024,
-        messages: [{ role: 'user', content: buildPrompt(text, topic || 'celý text', qType, askedQuestions, difficulty) }]
+        messages: [{ role: 'user', content: buildPrompt(text, topic || 'celý text', askedQuestions, masteredQuestions, difficulty) }]
       })
     });
   } catch {

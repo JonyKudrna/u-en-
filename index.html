@@ -286,7 +286,6 @@
       margin-bottom: 10px;
     }
     .badge-retry { background: #fef3c7; color: #92400e; }
-    .badge-review { background: #f0fdf4; color: #166534; }
 
     /* Question type badge */
     .q-type-badge {
@@ -296,9 +295,6 @@
       margin-bottom: 14px;
     }
     .badge-mc { background: #ede9fe; color: #6d28d9; }
-    .badge-tf { background: #fce7f3; color: #be185d; }
-    .badge-open { background: #fff7ed; color: #c2410c; }
-    .badge-explain { background: #f0fdf4; color: #166534; }
 
     /* Question loading */
     .q-loading {
@@ -336,23 +332,6 @@
     .option-btn.correct .option-letter { border-color: var(--success); color: var(--success); background: white; }
     .option-btn.wrong .option-letter { border-color: var(--error); color: var(--error); background: white; }
 
-    /* True/False */
-    .tf-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
-    .tf-btn {
-      padding: 18px 12px;
-      border-radius: var(--radius);
-      border: 2px solid var(--border);
-      background: var(--surface);
-      cursor: pointer; font-family: inherit;
-      font-size: 1rem; font-weight: 700;
-      transition: all 0.15s; color: var(--text);
-      text-align: center;
-    }
-    .tf-btn:hover:not(:disabled) { border-color: var(--primary); background: var(--primary-light); }
-    .tf-btn.correct { border-color: var(--success) !important; background: var(--success-light) !important; color: var(--success) !important; }
-    .tf-btn.wrong { border-color: var(--error) !important; background: var(--error-light) !important; color: var(--error) !important; }
-    .tf-btn:disabled { cursor: default; }
-
     /* Feedback */
     .feedback-box {
       padding: 14px 16px;
@@ -365,44 +344,6 @@
     .feedback-box.show { display: block; }
     .feedback-correct { background: #f0fdf4; border-left: 4px solid var(--success); color: #166534; }
     .feedback-wrong { background: #fff1f2; border-left: 4px solid var(--error); color: #991b1b; }
-
-    /* Open / Explain */
-    .answer-textarea {
-      width: 100%; min-height: 110px;
-      padding: 12px 14px;
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius-sm);
-      font-size: 0.95rem; color: var(--text);
-      resize: vertical; font-family: inherit;
-      line-height: 1.5; outline: none; background: var(--surface);
-      transition: border-color 0.2s;
-      margin-bottom: 12px;
-    }
-    .answer-textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
-    .evaluating-row {
-      display: none; align-items: center; gap: 8px;
-      font-size: 0.875rem; color: var(--text-muted);
-      padding: 10px 0;
-    }
-    .evaluating-row.show { display: flex; }
-    .model-answer {
-      padding: 14px 16px;
-      background: var(--primary-light);
-      border-radius: var(--radius-sm);
-      border-left: 4px solid var(--primary);
-      margin-bottom: 12px;
-      display: none;
-    }
-    .model-answer.show { display: block; }
-    .model-answer-label { font-size: 0.72rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
-    .model-answer-text { font-size: 0.875rem; color: var(--text); line-height: 1.6; }
-    .keywords-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-    .keyword {
-      padding: 2px 8px; background: white;
-      border: 1px solid var(--primary-border); border-radius: 99px;
-      font-size: 0.72rem; color: var(--primary); font-weight: 500;
-    }
-    .keyword.matched { background: #dcfce7; border-color: #86efac; color: var(--success); }
 
     /* Results */
     .score-wrap { text-align: center; padding: 24px 0 20px; }
@@ -614,45 +555,6 @@
           <div id="mc-feedback" class="feedback-box"></div>
         </div>
 
-        <!-- True/False -->
-        <div id="tf-area" style="display:none;">
-          <div class="tf-btns">
-            <button class="tf-btn" id="btn-true">✓ Pravda</button>
-            <button class="tf-btn" id="btn-false">✗ Nepravda</button>
-          </div>
-          <div id="tf-feedback" class="feedback-box"></div>
-        </div>
-
-        <!-- Open -->
-        <div id="open-area" style="display:none;">
-          <textarea id="open-answer" class="answer-textarea" placeholder="Napište vaši odpověď…"></textarea>
-          <button class="btn btn-secondary btn-sm" id="btn-check-open" style="margin-bottom:12px;">🔍 Zkontrolovat</button>
-          <div id="open-evaluating" class="evaluating-row">
-            <div class="spinner-sm"></div>
-            <span>AI hodnotí vaši odpověď…</span>
-          </div>
-          <div id="open-feedback" class="feedback-box"></div>
-          <div id="open-model" class="model-answer">
-            <div class="model-answer-label">Vzorová odpověď</div>
-            <div class="model-answer-text" id="open-model-text"></div>
-            <div class="keywords-row" id="open-keywords"></div>
-          </div>
-        </div>
-
-        <!-- Explain -->
-        <div id="explain-area" style="display:none;">
-          <textarea id="explain-answer" class="answer-textarea" placeholder="Napište vysvětlení…" style="min-height:140px;"></textarea>
-          <button class="btn btn-secondary btn-sm" id="btn-check-explain" style="margin-bottom:12px;">🔍 Zkontrolovat</button>
-          <div id="explain-evaluating" class="evaluating-row">
-            <div class="spinner-sm"></div>
-            <span>AI hodnotí vaši odpověď…</span>
-          </div>
-          <div id="explain-feedback" class="feedback-box"></div>
-          <div id="explain-model" class="model-answer">
-            <div class="model-answer-label">Vzorová odpověď</div>
-            <div class="model-answer-text" id="explain-model-text"></div>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -780,19 +682,25 @@ const ProgressDB = {
     };
   },
 
-  // Vrátí otázky, s nimiž měl uživatel potíže (seřazeno od nejhorší chybovosti), max 3 na téma
+  // Vrátí otázky, s nimiž měl uživatel potíže a nikdy je nezodpověděl správně, max 3 na téma
   getHardQuestions(fileId, topicId) {
     if (!fileId) return [];
     const p = this.load(fileId, topicId);
     return Object.values(p.questions)
-      .filter(e => e.wrong > 0 && e.q)
-      .sort((a, b) => {
-        const ra = a.wrong / (a.wrong + a.correct);
-        const rb = b.wrong / (b.wrong + b.correct);
-        return rb - ra;
-      })
+      .filter(e => e.wrong > 0 && e.correct === 0 && e.q)
+      .sort((a, b) => b.wrong - a.wrong)
       .slice(0, 3)
       .map(e => e.q);
+  },
+
+  // Vrátí texty otázek zodpovězených správně alespoň jednou (pro masteredSet)
+  getMasteredQuestions(fileId, topicId) {
+    if (!fileId) return [];
+    const p = this.load(fileId, topicId);
+    return Object.values(p.questions)
+      .filter(e => e.correct > 0)
+      .map(e => e.q && e.q.question)
+      .filter(Boolean);
   }
 };
 
@@ -810,11 +718,11 @@ const state = {
   questionsAnswered: 0,
   correctCount: 0,
   askedQuestions: [],     // question texts (avoid repeats)
-  retryQueue: [],         // [ { question, delay } ]
-  reviewQueue: [],        // [ { question, dueAt } ]
+  retryQueue: [],         // [ { question, delay } ] — špatně zodpovězené, opakují se
+  masteredSet: [],        // question texts answered correctly — never repeat
+  topicQueue: [],         // round-robin fronta témat
   currentQuestion: null,
   answeredCurrent: false,
-  topicQueue: [],         // round-robin queue — každé téma přesně jednou, pak znovu
   sessionActive: false,
   prefetchQueue: []       // questions pre-fetched in background
 };
@@ -965,11 +873,16 @@ const API = {
     return data.topics;
   },
 
-  async generateQuestion(text, topic, questionType, askedQuestions, difficulty) {
+  async generateQuestion(text, topic, askedQuestions, masteredQuestions, difficulty) {
     const resp = await fetch('/api/question', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, topic, questionType, askedQuestions: askedQuestions.slice(-20), difficulty })
+      body: JSON.stringify({
+        text, topic,
+        askedQuestions: askedQuestions.slice(-20),
+        masteredQuestions: masteredQuestions.slice(-30),
+        difficulty
+      })
     });
     const data = await resp.json().catch(() => ({}));
     if (!resp.ok) {
@@ -1019,36 +932,33 @@ function getFileIcon(ext) {
   return { pdf: '📕', docx: '📘', txt: '📄' }[ext] || '📄';
 }
 
-function pickQuestionType() {
-  const pool = ['multiple_choice', 'multiple_choice', 'true_false', 'open', 'open', 'explain'];
-  return pool[Math.floor(Math.random() * pool.length)];
-}
-
-// Vrátí další téma z round-robin fronty.
-// Každé vybrané téma se použije přesně jednou, pak se fronta zamíchá znovu.
+// Round-robin topic selection with Fisher-Yates shuffle
 function nextTopic() {
   if (state.topicQueue.length === 0) {
-    // Fisher-Yates shuffle pro rovnoměrné střídání
-    const arr = [...state.selectedTopics];
-    for (let i = arr.length - 1; i > 0; i--) {
+    // Refill and shuffle
+    state.topicQueue = [...state.selectedTopics];
+    for (let i = state.topicQueue.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
+      [state.topicQueue[i], state.topicQueue[j]] = [state.topicQueue[j], state.topicQueue[i]];
     }
-    state.topicQueue = arr;
   }
   return state.topicQueue.shift();
 }
 
-// Zamíchá možnosti MC otázky tak, aby správná odpověď nebyla vždy na stejné pozici.
+// Fisher-Yates shuffle of MC options; returns question with updated correct index
 function shuffleMCOptions(q) {
-  if (q.type !== 'multiple_choice' || !Array.isArray(q.options)) return q;
-  const correctText = q.options[q.correct];
   const opts = [...q.options];
-  for (let i = opts.length - 1; i > 0; i--) {
+  const n = opts.length;
+  const perm = Array.from({ length: n }, (_, i) => i);
+  for (let i = n - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [opts[i], opts[j]] = [opts[j], opts[i]];
+    [perm[i], perm[j]] = [perm[j], perm[i]];
   }
-  return { ...q, options: opts, correct: opts.indexOf(correctText) };
+  return {
+    ...q,
+    options: perm.map(i => opts[i]),
+    correct: perm.indexOf(q.correct)
+  };
 }
 
 // ============================================================
@@ -1226,14 +1136,22 @@ function startSession() {
   state.correctCount = 0;
   state.askedQuestions = [];
   state.retryQueue = [];
-  state.reviewQueue = [];
   state.topicQueue = [];
   state.answeredCurrent = false;
   state.sessionActive = true;
   state.prefetchQueue = [];
   prefetchPromise = null;
 
-  // Pre-load otázky se špatnou historií (rovnoměrně rozložené na začátek sezení)
+  // Load mastered questions from all selected topics so AI never repeats them
+  state.masteredSet = [];
+  state.selectedTopics.forEach(topic => {
+    const mastered = ProgressDB.getMasteredQuestions(state.currentFileId, topic.id);
+    mastered.forEach(qt => {
+      if (!state.masteredSet.includes(qt)) state.masteredSet.push(qt);
+    });
+  });
+
+  // Pre-load questions that were previously answered incorrectly (and never correctly)
   let hardDelay = 0;
   state.selectedTopics.forEach(topic => {
     const hardQs = ProgressDB.getHardQuestions(state.currentFileId, topic.id);
@@ -1258,7 +1176,7 @@ function updateStats() {
 async function loadNextQuestion() {
   document.getElementById('btn-next').style.display = 'none';
 
-  // 1. Retry queue (already due)
+  // 1. Retry queue (already due) — only wrong-answered questions
   const retryIdx = state.retryQueue.findIndex(item => item.delay <= 0);
   if (retryIdx >= 0) {
     const item = state.retryQueue.splice(retryIdx, 1)[0];
@@ -1266,21 +1184,13 @@ async function loadNextQuestion() {
     return;
   }
 
-  // 2. Review queue (spaced repetition)
-  const reviewIdx = state.reviewQueue.findIndex(item => item.dueAt <= state.questionsAnswered);
-  if (reviewIdx >= 0) {
-    const item = state.reviewQueue.splice(reviewIdx, 1)[0];
-    renderQuestion(item.question, 'review');
-    return;
-  }
-
-  // 3. Use pre-fetched question (instant – no loading screen)
+  // 2. Use pre-fetched question (instant – no loading screen)
   if (state.prefetchQueue.length > 0) {
     renderQuestion(state.prefetchQueue.shift(), 'new');
     return;
   }
 
-  // 4. Wait for in-flight background fetch (shows loading only if it wasn't ready in time)
+  // 3. Wait for in-flight background fetch (shows loading only if it wasn't ready in time)
   if (prefetchPromise !== null) {
     showQuizLoading();
     await prefetchPromise;
@@ -1290,20 +1200,20 @@ async function loadNextQuestion() {
     }
   }
 
-  // 5. Nothing pre-fetched — fetch now (first question of session or after prefetch error)
+  // 4. Nothing pre-fetched — fetch now (first question of session or after prefetch error)
   showQuizLoading();
   const topic = nextTopic();
-  const qType = pickQuestionType();
 
   try {
-    const question = await API.generateQuestion(
-      state.text, topic.name, qType, state.askedQuestions, state.difficulty
+    let question = await API.generateQuestion(
+      state.text, topic.name, state.askedQuestions, state.masteredSet, state.difficulty
     );
+    question = shuffleMCOptions(question);
     question._topicName = topic.name;
     question._topicId = topic.id;
     renderQuestion(question, 'new');
   } catch (err) {
-    state.topicQueue.unshift(topic); // vrátit téma zpět při chybě
+    state.topicQueue.unshift(topic); // return topic to front of queue on error
     document.getElementById('q-loading').style.display = 'none';
     document.getElementById('q-content').style.display = 'block';
     document.getElementById('q-text').textContent = '';
@@ -1322,30 +1232,29 @@ function showQuizLoading() {
 }
 
 // Start a background fetch for the next NEW question if one isn't already queued/in-flight
-// and the next question won't come from the retry/review queues.
+// and the next question won't come from the retry queue.
 function maybePrefetch() {
   if (!state.sessionActive) return;
   if (prefetchPromise !== null || state.prefetchQueue.length > 0) return;
 
   // Next question will come from retry queue — no API call needed
   if (state.retryQueue.some(i => i.delay <= 1)) return;
-  // Next question will come from review queue — no API call needed
-  if (state.reviewQueue.some(i => i.dueAt <= state.questionsAnswered + 1)) return;
 
   const topic = nextTopic();
-  const qType = pickQuestionType();
   const askedSnapshot = state.askedQuestions.slice(-20);
+  const masteredSnapshot = state.masteredSet.slice(-30);
 
   prefetchPromise = API.generateQuestion(
-    state.text, topic.name, qType, askedSnapshot, state.difficulty
+    state.text, topic.name, askedSnapshot, masteredSnapshot, state.difficulty
   )
     .then(question => {
+      question = shuffleMCOptions(question);
       question._topicName = topic.name;
       question._topicId = topic.id;
       state.prefetchQueue.push(question);
     })
     .catch(() => {
-      state.topicQueue.unshift(topic); // vrátit téma zpět při chybě
+      state.topicQueue.unshift(topic); // return topic to front of queue on error
     })
     .finally(() => {
       prefetchPromise = null;
@@ -1353,8 +1262,6 @@ function maybePrefetch() {
 }
 
 function renderQuestion(question, mode) {
-  // Zamíchat MC možnosti klientsky – zajistí rovnoměrné rozložení správné odpovědi
-  if (question.type === 'multiple_choice') question = shuffleMCOptions(question);
   state.currentQuestion = question;
   state.answeredCurrent = false;
   state._retryLoad = false;
@@ -1378,38 +1285,21 @@ function renderQuestion(question, mode) {
     modeBadge.className = 'mode-badge badge-retry';
     modeBadge.textContent = '🔄 Opakování – tuto otázku jste minule zodpověděli špatně';
     modeBadge.style.display = 'inline-flex';
-  } else if (mode === 'review') {
-    modeBadge.className = 'mode-badge badge-review';
-    modeBadge.textContent = '📖 Připomenutí – procvičení správné odpovědi';
-    modeBadge.style.display = 'inline-flex';
   } else {
     modeBadge.style.display = 'none';
   }
 
   // Type badge
   const typeBadge = document.getElementById('q-type-badge');
-  const typeMap = {
-    multiple_choice: ['badge-mc', '📝 Výběr z možností'],
-    true_false: ['badge-tf', '⚖️ Pravda / Nepravda'],
-    open: ['badge-open', '✏️ Krátká odpověď'],
-    explain: ['badge-explain', '💬 Vysvětlení']
-  };
-  const [cls, label] = typeMap[question.type] || typeMap.multiple_choice;
-  typeBadge.className = 'q-type-badge ' + cls;
-  typeBadge.textContent = label;
+  typeBadge.className = 'q-type-badge badge-mc';
+  typeBadge.textContent = '📝 Výběr z možností';
 
   // Question text
   document.getElementById('q-text').textContent = question.question;
 
-  // Hide all areas
-  ['mc-area', 'tf-area', 'open-area', 'explain-area'].forEach(id => {
-    document.getElementById(id).style.display = 'none';
-  });
-
-  if (question.type === 'multiple_choice') renderMC(question);
-  else if (question.type === 'true_false') renderTF(question);
-  else if (question.type === 'open') renderOpen(question);
-  else if (question.type === 'explain') renderExplain(question);
+  // Show MC area
+  document.getElementById('mc-area').style.display = 'none';
+  renderMC(question);
 
   // Start fetching the next question in the background while the user reads/answers this one
   maybePrefetch();
@@ -1452,134 +1342,6 @@ function answerMC(chosen, q) {
   onAnswerSubmitted(isCorrect);
 }
 
-function renderTF(q) {
-  document.getElementById('tf-area').style.display = 'block';
-  document.getElementById('tf-feedback').className = 'feedback-box';
-  document.getElementById('tf-feedback').textContent = '';
-  document.getElementById('btn-true').className = 'tf-btn';
-  document.getElementById('btn-false').className = 'tf-btn';
-  document.getElementById('btn-true').disabled = false;
-  document.getElementById('btn-false').disabled = false;
-}
-
-function answerTF(userChoice, q) {
-  if (state.answeredCurrent) return;
-  const isCorrect = userChoice === q.correct;
-
-  document.getElementById('btn-true').disabled = true;
-  document.getElementById('btn-false').disabled = true;
-
-  const trueBtn = document.getElementById('btn-true');
-  const falseBtn = document.getElementById('btn-false');
-  if (q.correct === true) trueBtn.classList.add('correct');
-  else falseBtn.classList.add('correct');
-  if (!isCorrect) {
-    if (userChoice === true) trueBtn.classList.add('wrong');
-    else falseBtn.classList.add('wrong');
-  }
-
-  if (q.explanation) {
-    const fb = document.getElementById('tf-feedback');
-    fb.className = 'feedback-box show ' + (isCorrect ? 'feedback-correct' : 'feedback-wrong');
-    fb.textContent = (isCorrect ? '✓ Správně! ' : '✗ Špatně. ') + q.explanation;
-  }
-
-  onAnswerSubmitted(isCorrect);
-}
-
-function renderOpen(q) {
-  document.getElementById('open-area').style.display = 'block';
-  document.getElementById('open-answer').value = '';
-  document.getElementById('open-answer').disabled = false;
-  document.getElementById('btn-check-open').disabled = false;
-  document.getElementById('btn-check-open').style.display = 'block';
-  document.getElementById('open-evaluating').className = 'evaluating-row';
-  document.getElementById('open-feedback').className = 'feedback-box';
-  document.getElementById('open-model').className = 'model-answer';
-}
-
-async function checkOpenAnswer(q) {
-  const userAnswer = document.getElementById('open-answer').value.trim();
-  if (userAnswer.length < 2) { showToast('Nejprve napište svou odpověď', 'err'); return; }
-
-  document.getElementById('open-answer').disabled = true;
-  document.getElementById('btn-check-open').style.display = 'none';
-  document.getElementById('open-evaluating').className = 'evaluating-row show';
-
-  try {
-    const { correct, feedback } = await API.evaluateAnswer(q.question, userAnswer, q.answer || '');
-    document.getElementById('open-evaluating').className = 'evaluating-row';
-
-    const fb = document.getElementById('open-feedback');
-    fb.className = 'feedback-box show ' + (correct ? 'feedback-correct' : 'feedback-wrong');
-    fb.textContent = (correct ? '✓ ' : '✗ ') + (feedback || (correct ? 'Správně!' : 'Nesprávně.'));
-
-    // Show model answer
-    if (q.answer) {
-      document.getElementById('open-model-text').textContent = q.answer;
-      const kwRow = document.getElementById('open-keywords');
-      kwRow.innerHTML = '';
-      if (Array.isArray(q.keywords) && q.keywords.length > 0) {
-        const lower = userAnswer.toLowerCase();
-        q.keywords.forEach(kw => {
-          const span = document.createElement('span');
-          span.className = 'keyword' + (lower.includes(kw.toLowerCase()) ? ' matched' : '');
-          span.textContent = kw;
-          kwRow.appendChild(span);
-        });
-      }
-      document.getElementById('open-model').className = 'model-answer show';
-    }
-
-    onAnswerSubmitted(correct);
-  } catch (err) {
-    document.getElementById('open-evaluating').className = 'evaluating-row';
-    showToast('Chyba při hodnocení: ' + err.message, 'err');
-    document.getElementById('btn-check-open').style.display = 'block';
-    document.getElementById('open-answer').disabled = false;
-  }
-}
-
-function renderExplain(q) {
-  document.getElementById('explain-area').style.display = 'block';
-  document.getElementById('explain-answer').value = '';
-  document.getElementById('explain-answer').disabled = false;
-  document.getElementById('btn-check-explain').disabled = false;
-  document.getElementById('btn-check-explain').style.display = 'block';
-  document.getElementById('explain-evaluating').className = 'evaluating-row';
-  document.getElementById('explain-feedback').className = 'feedback-box';
-  document.getElementById('explain-model').className = 'model-answer';
-}
-
-async function checkExplainAnswer(q) {
-  const userAnswer = document.getElementById('explain-answer').value.trim();
-  if (userAnswer.length < 10) { showToast('Nejprve napište vysvětlení', 'err'); return; }
-
-  document.getElementById('explain-answer').disabled = true;
-  document.getElementById('btn-check-explain').style.display = 'none';
-  document.getElementById('explain-evaluating').className = 'evaluating-row show';
-
-  try {
-    const { correct, feedback } = await API.evaluateAnswer(q.question, userAnswer, q.answer || '');
-    document.getElementById('explain-evaluating').className = 'evaluating-row';
-
-    const fb = document.getElementById('explain-feedback');
-    fb.className = 'feedback-box show ' + (correct ? 'feedback-correct' : 'feedback-wrong');
-    fb.textContent = (correct ? '✓ ' : '✗ ') + (feedback || (correct ? 'Správně!' : 'Nesprávně.'));
-
-    if (q.answer) {
-      document.getElementById('explain-model-text').textContent = q.answer;
-      document.getElementById('explain-model').className = 'model-answer show';
-    }
-
-    onAnswerSubmitted(correct);
-  } catch (err) {
-    document.getElementById('explain-evaluating').className = 'evaluating-row';
-    showToast('Chyba při hodnocení: ' + err.message, 'err');
-    document.getElementById('btn-check-explain').style.display = 'block';
-    document.getElementById('explain-answer').disabled = false;
-  }
-}
 
 function onAnswerSubmitted(isCorrect) {
   if (state.answeredCurrent) return;
@@ -1596,19 +1358,22 @@ function onAnswerSubmitted(isCorrect) {
   // Uložit výsledek do progress DB
   ProgressDB.recordAnswer(state.currentFileId, q._topicId, q, isCorrect);
 
-  if (!isCorrect) {
-    // Add to retry queue: re-ask after 3–5 questions
-    if (!state.retryQueue.some(i => i.question.question === q.question)) {
-      state.retryQueue.push({ question: q, delay: 3 + Math.floor(Math.random() * 3) });
+  if (isCorrect) {
+    // Mark as mastered — never ask this question again
+    if (!state.masteredSet.includes(q.question)) {
+      state.masteredSet.push(q.question);
     }
+    // Remove from retry queue if it was there
+    state.retryQueue = state.retryQueue.filter(i => i.question.question !== q.question);
   } else {
-    // Add to review queue: revisit after ~8–12 questions
-    if (!state.reviewQueue.some(i => i.question.question === q.question)) {
-      state.reviewQueue.push({ question: q, dueAt: state.questionsAnswered + 8 + Math.floor(Math.random() * 5) });
+    // Add to retry queue: re-ask after 3–5 questions, only if not already mastered
+    if (!state.masteredSet.includes(q.question) &&
+        !state.retryQueue.some(i => i.question.question === q.question)) {
+      state.retryQueue.push({ question: q, delay: 3 + Math.floor(Math.random() * 3) });
     }
   }
 
-  // Track to avoid repeats (cap at 30)
+  // Track recently asked questions to avoid near-duplicates (cap at 30)
   if (!state.askedQuestions.includes(q.question)) {
     state.askedQuestions.push(q.question);
     if (state.askedQuestions.length > 30) state.askedQuestions.shift();
@@ -1712,28 +1477,6 @@ function init() {
   });
 
   document.getElementById('btn-start').addEventListener('click', startSession);
-
-  // Quiz: True/False
-  document.getElementById('btn-true').addEventListener('click', () => {
-    if (!state.currentQuestion || state.answeredCurrent) return;
-    answerTF(true, state.currentQuestion);
-  });
-  document.getElementById('btn-false').addEventListener('click', () => {
-    if (!state.currentQuestion || state.answeredCurrent) return;
-    answerTF(false, state.currentQuestion);
-  });
-
-  // Quiz: Open
-  document.getElementById('btn-check-open').addEventListener('click', () => {
-    if (!state.currentQuestion || state.answeredCurrent) return;
-    checkOpenAnswer(state.currentQuestion);
-  });
-
-  // Quiz: Explain
-  document.getElementById('btn-check-explain').addEventListener('click', () => {
-    if (!state.currentQuestion || state.answeredCurrent) return;
-    checkExplainAnswer(state.currentQuestion);
-  });
 
   // Quiz: Next
   document.getElementById('btn-next').addEventListener('click', () => {
