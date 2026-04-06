@@ -2,6 +2,7 @@
   "functions": {
     "api/analyze.js": { "maxDuration": 30 },
     "api/question.js": { "maxDuration": 30 },
+    "api/questions-batch.js": { "maxDuration": 60 },
     "api/evaluate.js": { "maxDuration": 20 }
   },
   "headers": [

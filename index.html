@@ -641,10 +641,9 @@ const FilesDB = {
 
   delete(id) {
     Store.set(this.KEY, this.getAll().filter(f => f.id !== id));
-    // Smazat i veškerý progress pro tento soubor
     try {
       Object.keys(localStorage)
-        .filter(k => k.startsWith('prog_' + id + '_'))
+        .filter(k => k.startsWith('prog_' + id + '_') || k.startsWith('qcache_' + id + '_'))
         .forEach(k => localStorage.removeItem(k));
     } catch {}
   }
@@ -705,6 +704,80 @@ const ProgressDB = {
 };
 
 // ============================================================
+// QUESTION CACHE – offline batch zásoby otázek (localStorage)
+// ============================================================
+const QuestionCache = {
+  key(fileId, difficulty) { return `qcache_${fileId}_${difficulty}`; },
+
+  getAll(fileId, difficulty) {
+    return Store.get(this.key(fileId, difficulty), []);
+  },
+
+  // Count unmastered questions available for given topic IDs
+  countForTopics(fileId, difficulty, topicIds, masteredSet = []) {
+    return this.getAll(fileId, difficulty)
+      .filter(q => topicIds.includes(q._topicId) && !masteredSet.includes(q.question))
+      .length;
+  },
+
+  // Remove and return first unmastered question for given topics; null if none
+  shiftForTopics(fileId, difficulty, topicIds, masteredSet = []) {
+    const all = this.getAll(fileId, difficulty);
+    const idx = all.findIndex(q => topicIds.includes(q._topicId) && !masteredSet.includes(q.question));
+    if (idx < 0) return null;
+    const [q] = all.splice(idx, 1);
+    try { Store.set(this.key(fileId, difficulty), all); } catch {}
+    return q;
+  },
+
+  // Add questions; deduplicates by question text
+  append(fileId, difficulty, questions) {
+    const all = this.getAll(fileId, difficulty);
+    const existing = new Set(all.map(q => q.question));
+    const fresh = questions.filter(q => !existing.has(q.question));
+    if (fresh.length === 0) return 0;
+    try { Store.set(this.key(fileId, difficulty), [...all, ...fresh]); } catch {}
+    return fresh.length;
+  },
+
+  // Remove mastered questions from cache to keep it lean
+  purgeMastered(fileId, difficulty, masteredSet) {
+    if (!masteredSet.length) return;
+    const all = this.getAll(fileId, difficulty);
+    const clean = all.filter(q => !masteredSet.includes(q.question));
+    if (clean.length < all.length) try { Store.set(this.key(fileId, difficulty), clean); } catch {}
+  },
+
+  // Delete all difficulty variants for a file
+  delete(fileId) {
+    ['easy', 'medium', 'hard'].forEach(d => Store.remove(this.key(fileId, d)));
+  }
+};
+
+// ============================================================
+// TEXT EXTRACTION – relevantní výřez textu pro téma
+// ============================================================
+function extractTopicText(text, topicName, topicDesc, maxChars = 3500) {
+  const keywords = (topicName + ' ' + topicDesc)
+    .toLowerCase().split(/\W+/).filter(w => w.length > 3);
+  if (!keywords.length) return text.slice(0, maxChars);
+
+  const chunkSize = 450;
+  const numChunks = Math.ceil(maxChars / chunkSize);
+  const scored = [];
+  for (let i = 0; i < text.length; i += chunkSize) {
+    const chunk = text.slice(i, i + chunkSize).toLowerCase();
+    const score = keywords.reduce((s, kw) => s + (chunk.split(kw).length - 1), 0);
+    scored.push({ start: i, score });
+  }
+  const selected = scored
+    .sort((a, b) => b.score - a.score)
+    .slice(0, numChunks)
+    .sort((a, b) => a.start - b.start);
+  return selected.map(c => text.slice(c.start, Math.min(c.start + chunkSize, text.length))).join('\n');
+}
+
+// ============================================================
 // APP STATE
 // ============================================================
 const state = {
@@ -720,15 +793,13 @@ const state = {
   askedQuestions: [],     // question texts (avoid repeats)
   retryQueue: [],         // [ { question, delay } ] — špatně zodpovězené, opakují se
   masteredSet: [],        // question texts answered correctly — never repeat
-  topicQueue: [],         // round-robin fronta témat
   currentQuestion: null,
   answeredCurrent: false,
-  sessionActive: false,
-  prefetchQueue: []       // questions pre-fetched in background
+  sessionActive: false
 };
 
-// Promise for the in-flight background fetch (null when idle)
-let prefetchPromise = null;
+// Promise for background cache replenishment (null when idle)
+let batchRefillPromise = null;
 
 // ============================================================
 // FILE PARSER
@@ -873,14 +944,16 @@ const API = {
     return data.topics;
   },
 
-  async generateQuestion(text, topic, askedQuestions, masteredQuestions, difficulty) {
-    const resp = await fetch('/api/question', {
+  async generateQuestionBatch(text, topics, count, masteredQuestions, askedQuestions, difficulty) {
+    const resp = await fetch('/api/questions-batch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        text, topic,
+        text,
+        topics: topics.map(t => ({ id: t.id, name: t.name })),
+        count,
+        masteredQuestions: masteredQuestions.slice(-40),
         askedQuestions: askedQuestions.slice(-20),
-        masteredQuestions: masteredQuestions.slice(-30),
         difficulty
       })
     });
@@ -889,7 +962,10 @@ const API = {
       if (resp.status === 429) throw new Error('Překročen limit požadavků. Chvíli počkejte.');
       throw new Error(data.error || `Chyba serveru: ${resp.status}`);
     }
-    return data.question;
+    if (!Array.isArray(data.questions) || data.questions.length === 0) {
+      throw new Error('Nepodařilo se vygenerovat otázky. Zkuste znovu.');
+    }
+    return data.questions;
   },
 
   async evaluateAnswer(question, userAnswer, expectedAnswer) {
@@ -930,19 +1006,6 @@ function formatFileSize(bytes) {
 
 function getFileIcon(ext) {
   return { pdf: '📕', docx: '📘', txt: '📄' }[ext] || '📄';
-}
-
-// Round-robin topic selection with Fisher-Yates shuffle
-function nextTopic() {
-  if (state.topicQueue.length === 0) {
-    // Refill and shuffle
-    state.topicQueue = [...state.selectedTopics];
-    for (let i = state.topicQueue.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [state.topicQueue[i], state.topicQueue[j]] = [state.topicQueue[j], state.topicQueue[i]];
-    }
-  }
-  return state.topicQueue.shift();
 }
 
 // Fisher-Yates shuffle of MC options; returns question with updated correct index
@@ -1059,6 +1122,19 @@ function deleteSavedFile(id) {
 // TOPICS SCREEN
 // ============================================================
 function renderTopics(topics) {
+  // Compute text excerpts for topics that don't have them yet (used for cheap replenishment)
+  if (state.text) {
+    let changed = false;
+    topics = topics.map(t => {
+      if (!t.excerpt) {
+        changed = true;
+        return { ...t, excerpt: extractTopicText(state.text, t.name, t.description || '') };
+      }
+      return t;
+    });
+    if (changed && state.currentFileId) FilesDB.updateTopics(state.currentFileId, topics);
+  }
+
   state.topics = topics;
   state.selectedTopics = [...topics]; // all selected by default
   document.getElementById('topics-file-name').textContent = state.fileName;
@@ -1131,39 +1207,97 @@ async function analyzeText() {
 // ============================================================
 // SESSION / QUIZ
 // ============================================================
-function startSession() {
+
+// Generates a batch of questions and appends them to the cache.
+// initial=true → send full text; false → use topic excerpts to reduce API costs.
+async function generateAndCacheBatch(initial = false) {
+  const topics = state.selectedTopics;
+  const count = initial ? 30 : 20;
+
+  // Use stored topic excerpts for replenishment to avoid sending full document again
+  let textToSend;
+  if (initial || !topics.some(t => t.excerpt)) {
+    textToSend = state.text;
+  } else {
+    textToSend = topics.map(t => t.excerpt || '').filter(Boolean).join('\n\n---\n\n');
+    if (textToSend.length < 300) textToSend = state.text;
+  }
+
+  const questions = await API.generateQuestionBatch(
+    textToSend, topics, count,
+    state.masteredSet, state.askedQuestions, state.difficulty
+  );
+
+  // Shuffle order before caching so questions don't always come in API-generation order
+  for (let i = questions.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [questions[i], questions[j]] = [questions[j], questions[i]];
+  }
+
+  // Apply client-side MC option shuffle for uniform correct-answer distribution
+  const shuffled = questions.map(q => shuffleMCOptions(q));
+
+  QuestionCache.append(state.currentFileId, state.difficulty, shuffled);
+}
+
+async function startSession() {
   state.questionsAnswered = 0;
   state.correctCount = 0;
   state.askedQuestions = [];
   state.retryQueue = [];
-  state.topicQueue = [];
   state.answeredCurrent = false;
   state.sessionActive = true;
-  state.prefetchQueue = [];
-  prefetchPromise = null;
+  batchRefillPromise = null;
 
-  // Load mastered questions from all selected topics so AI never repeats them
+  // Load mastered questions from all selected topics
   state.masteredSet = [];
   state.selectedTopics.forEach(topic => {
-    const mastered = ProgressDB.getMasteredQuestions(state.currentFileId, topic.id);
-    mastered.forEach(qt => {
+    ProgressDB.getMasteredQuestions(state.currentFileId, topic.id).forEach(qt => {
       if (!state.masteredSet.includes(qt)) state.masteredSet.push(qt);
     });
   });
 
-  // Pre-load questions that were previously answered incorrectly (and never correctly)
+  // Pre-load questions historically answered wrong (never correctly)
   let hardDelay = 0;
   state.selectedTopics.forEach(topic => {
-    const hardQs = ProgressDB.getHardQuestions(state.currentFileId, topic.id);
-    hardQs.forEach(q => {
+    ProgressDB.getHardQuestions(state.currentFileId, topic.id).forEach(q => {
       if (!state.retryQueue.some(r => r.question.question === q.question)) {
         state.retryQueue.push({ question: q, delay: hardDelay++ });
       }
     });
   });
 
+  // Remove mastered questions from cache to keep it clean
+  QuestionCache.purgeMastered(state.currentFileId, state.difficulty, state.masteredSet);
+
   updateStats();
   showScreen('screen-quiz');
+
+  const topicIds = state.selectedTopics.map(t => t.id);
+  const available = QuestionCache.countForTopics(
+    state.currentFileId, state.difficulty, topicIds, state.masteredSet
+  );
+
+  if (available === 0) {
+    // Nothing cached yet — generate initial batch (shows loading spinner)
+    showQuizLoading();
+    document.getElementById('q-loading').querySelector('span').textContent = 'Připravuji sadu otázek…';
+    try {
+      await generateAndCacheBatch(true);
+    } catch (err) {
+      document.getElementById('q-loading').style.display = 'none';
+      document.getElementById('q-content').style.display = 'block';
+      document.getElementById('q-text').textContent = '';
+      showToast(err.message + ' — zkuste znovu.', 'err');
+      document.getElementById('btn-next').textContent = '🔄 Zkusit znovu';
+      document.getElementById('btn-next').style.display = 'block';
+      document.getElementById('btn-next').disabled = false;
+      state.answeredCurrent = true;
+      state._retryLoad = true;
+      return;
+    }
+  }
+
   loadNextQuestion();
 }
 
@@ -1176,51 +1310,54 @@ function updateStats() {
 async function loadNextQuestion() {
   document.getElementById('btn-next').style.display = 'none';
 
-  // 1. Retry queue (already due) — only wrong-answered questions
+  // 1. Retry queue (already due) — wrong-answered questions repeat
   const retryIdx = state.retryQueue.findIndex(item => item.delay <= 0);
   if (retryIdx >= 0) {
     const item = state.retryQueue.splice(retryIdx, 1)[0];
     renderQuestion(item.question, 'retry');
+    maybeReplenishCache();
     return;
   }
 
-  // 2. Use pre-fetched question (instant – no loading screen)
-  if (state.prefetchQueue.length > 0) {
-    renderQuestion(state.prefetchQueue.shift(), 'new');
-    return;
-  }
+  // 2. Pull from persistent cache (instant)
+  const topicIds = state.selectedTopics.map(t => t.id);
+  let q = QuestionCache.shiftForTopics(
+    state.currentFileId, state.difficulty, topicIds, state.masteredSet
+  );
 
-  // 3. Wait for in-flight background fetch (shows loading only if it wasn't ready in time)
-  if (prefetchPromise !== null) {
+  if (!q) {
+    // Cache empty — wait for in-flight replenishment or generate now
     showQuizLoading();
-    await prefetchPromise;
-    if (state.prefetchQueue.length > 0) {
-      renderQuestion(state.prefetchQueue.shift(), 'new');
-      return;
+    if (batchRefillPromise) {
+      await batchRefillPromise;
+    } else {
+      try {
+        await generateAndCacheBatch(false);
+      } catch (err) {
+        document.getElementById('q-loading').style.display = 'none';
+        document.getElementById('q-content').style.display = 'block';
+        document.getElementById('q-text').textContent = '';
+        showToast(err.message + ' — zkuste znovu.', 'err');
+        document.getElementById('btn-next').textContent = '🔄 Zkusit znovu';
+        document.getElementById('btn-next').style.display = 'block';
+        document.getElementById('btn-next').disabled = false;
+        state.answeredCurrent = true;
+        state._retryLoad = true;
+        return;
+      }
     }
+    q = QuestionCache.shiftForTopics(
+      state.currentFileId, state.difficulty, topicIds, state.masteredSet
+    );
   }
 
-  // 4. Nothing pre-fetched — fetch now (first question of session or after prefetch error)
-  showQuizLoading();
-  const topic = nextTopic();
-
-  try {
-    let question = await API.generateQuestion(
-      state.text, topic.name, state.askedQuestions, state.masteredSet, state.difficulty
-    );
-    question = shuffleMCOptions(question);
-    question._topicName = topic.name;
-    question._topicId = topic.id;
-    renderQuestion(question, 'new');
-  } catch (err) {
-    state.topicQueue.unshift(topic); // return topic to front of queue on error
-    document.getElementById('q-loading').style.display = 'none';
-    document.getElementById('q-content').style.display = 'block';
-    document.getElementById('q-text').textContent = '';
-    showToast(err.message + ' — zkuste znovu.', 'err');
+  if (q) {
+    renderQuestion(q, 'new');
+    maybeReplenishCache();
+  } else {
+    showToast('Zásobník otázek je prázdný — generuji nové…', '');
     document.getElementById('btn-next').textContent = '🔄 Zkusit znovu';
     document.getElementById('btn-next').style.display = 'block';
-    document.getElementById('btn-next').disabled = false;
     state.answeredCurrent = true;
     state._retryLoad = true;
   }
@@ -1231,34 +1368,21 @@ function showQuizLoading() {
   document.getElementById('q-content').style.display = 'none';
 }
 
-// Start a background fetch for the next NEW question if one isn't already queued/in-flight
-// and the next question won't come from the retry queue.
-function maybePrefetch() {
+// Silently replenish the question cache when it drops below threshold.
+// Uses topic excerpts instead of full document to reduce API costs.
+function maybeReplenishCache() {
   if (!state.sessionActive) return;
-  if (prefetchPromise !== null || state.prefetchQueue.length > 0) return;
+  if (batchRefillPromise) return;
 
-  // Next question will come from retry queue — no API call needed
-  if (state.retryQueue.some(i => i.delay <= 1)) return;
+  const topicIds = state.selectedTopics.map(t => t.id);
+  const available = QuestionCache.countForTopics(
+    state.currentFileId, state.difficulty, topicIds, state.masteredSet
+  );
+  if (available >= 10) return;
 
-  const topic = nextTopic();
-  const askedSnapshot = state.askedQuestions.slice(-20);
-  const masteredSnapshot = state.masteredSet.slice(-30);
-
-  prefetchPromise = API.generateQuestion(
-    state.text, topic.name, askedSnapshot, masteredSnapshot, state.difficulty
-  )
-    .then(question => {
-      question = shuffleMCOptions(question);
-      question._topicName = topic.name;
-      question._topicId = topic.id;
-      state.prefetchQueue.push(question);
-    })
-    .catch(() => {
-      state.topicQueue.unshift(topic); // return topic to front of queue on error
-    })
-    .finally(() => {
-      prefetchPromise = null;
-    });
+  batchRefillPromise = generateAndCacheBatch(false)
+    .catch(() => { /* silently ignore — retry will happen on next question */ })
+    .finally(() => { batchRefillPromise = null; });
 }
 
 function renderQuestion(question, mode) {
@@ -1301,8 +1425,8 @@ function renderQuestion(question, mode) {
   document.getElementById('mc-area').style.display = 'none';
   renderMC(question);
 
-  // Start fetching the next question in the background while the user reads/answers this one
-  maybePrefetch();
+  // Replenish cache in background while user reads/answers this question
+  maybeReplenishCache();
 }
 
 function renderMC(q) {
